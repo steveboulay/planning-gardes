@@ -1,7 +1,9 @@
-from datetime import timedelta
+from collections import defaultdict
+from datetime import date, timedelta
 from itertools import pairwise
 from operator import attrgetter
 
+from planning_rules.formatting import format_duration
 from planning_rules.models import RuleCategory, Shift, ShiftKind, Violation
 
 
@@ -73,8 +75,33 @@ def check_consecutive_nights(shifts: list[Shift], max_nights: int) -> list[Viola
 def check_weekly_hours(shifts: list[Shift], max_duration: timedelta) -> list[Violation]:
     """Retourne la liste des infractions et une liste vide si tout est conforme.
 
-    Une infraction est relevée si un soignant dépasse `max_duration` heures sur une semaine,
+    Une infraction est relevée si un soignant dépasse `max_duration` sur une semaine,
     du lundi au dimanche. Un poste compte dans la semaine où il commence.
     """
 
-    return []
+    duration_by_staff_week: dict[tuple[str, int, int], timedelta] = defaultdict(timedelta)
+
+    for shift in shifts:
+        iso = shift.start.isocalendar()
+        duration_by_staff_week[(shift.staff_id, iso.year, iso.week)] += shift.duration
+
+    violations: list[Violation] = []
+
+    for (staff_id, iso_year, iso_week), total_duration in duration_by_staff_week.items():
+        if total_duration > max_duration:
+            formatted_duration = format_duration(total_duration)
+            formatted_max_duration = format_duration(max_duration)
+            violations.append(
+                Violation(
+                    rule="heures_hebdomadaires",
+                    category=RuleCategory.LEGAL,
+                    staff_id=staff_id,
+                    day=date.fromisocalendar(iso_year, iso_week, 1),
+                    message=(
+                        f"Soignant {staff_id} : durée hebdomadaire de {formatted_duration}"
+                        f" supérieure à {formatted_max_duration}."
+                    ),
+                )
+            )
+
+    return violations
