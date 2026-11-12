@@ -28,6 +28,12 @@ def make_night(
     return make_shift(staff_id=staff_id, start=start, duration=duration, kind=ShiftKind.NIGHT)
 
 
+def make_consecutive_nights(staff_id: str, start: datetime, count: int) -> list[Shift]:
+    """Retourne {count} postes de nuit consécutifs."""
+
+    return [make_night(staff_id=staff_id, start=start + timedelta(days=i)) for i in range(count)]
+
+
 def test_empty_schedule_has_no_daily_rest_violation():
     violations = check_daily_rest(
         shifts=[],
@@ -129,11 +135,32 @@ def test_empty_schedule_has_no_consecutive_nights_violation():
 
 
 def test_nights_equal_to_maximum_have_no_consecutive_nights_violation():
-    first_night = make_night(staff_id="nurse-1", start=datetime(2026, 11, 2, 20, 0))
-    second_night = make_night(staff_id="nurse-1", start=datetime(2026, 11, 3, 20, 0))
-    third_night = make_night(staff_id="nurse-1", start=datetime(2026, 11, 4, 20, 0))
+    nights = make_consecutive_nights(
+        staff_id="nurse-1",
+        start=datetime(2026, 11, 2, 20, 0),
+        count=3,
+    )
+
     violations = check_consecutive_nights(
-        shifts=[first_night, second_night, third_night],
+        shifts=nights,
         max_nights=3,
     )
     assert violations == []
+
+
+def test_nights_greater_than_maximum_have_a_consecutive_nights_violation():
+    nights = make_consecutive_nights(
+        staff_id="nurse-1",
+        start=datetime(2026, 11, 2, 20, 0),
+        count=4,
+    )
+
+    violations = check_consecutive_nights(
+        shifts=nights,
+        max_nights=3,
+    )
+    assert len(violations) == 1
+    assert violations[0].rule == "nuits_consecutives"
+    assert violations[0].category == RuleCategory.COLLECTIVE
+    assert violations[0].staff_id == "nurse-1"
+    assert violations[0].day == date(2026, 11, 5)
