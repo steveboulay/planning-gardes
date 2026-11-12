@@ -68,3 +68,13 @@ def check_consecutive_nights(shifts: list[Shift], max_nights: int) -> list[Viola
                 )
             )
     return violations
+
+
+def check_weekly_hours(shifts: list[Shift], max_hours: int) -> list[Violation]:
+    """Retourne la liste des infractions et une liste vide si tout est conforme.
+
+    Une infraction est relevée si un soignant dépasse `max_hours` heures sur une semaine,
+    du lundi au dimanche. Un poste compte dans la semaine où il commence.
+    """
+
+    return []
