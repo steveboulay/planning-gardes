@@ -20,7 +20,8 @@ Ce projet est développé avec l'aide de Claude (Anthropic). J'écris le code et
 - **Vérifié par :** pytest et ruff en local, puis le pipeline de la merge request.
 - **Appris :** Python ne vérifie pas les types annotés à l'exécution, contrairement à PHP ; `@dataclass` génère le constructeur à partir des champs ; l'indentation délimite les blocs ;
 `len()` est une fonction et pas une méthode, `date` et `datetime` sont deux types distincts, et `git reset --soft` permet de refaire un commit ;
-les dictionnaires (`dict`) sont l'équivalent des tableaux associatifs de PHP, `collections.defaultdict` crée automatiquement une valeur vide pour une clé absente, et `.items()` parcourt à la fois les clés et les valeurs.
+les dictionnaires (`dict`) sont l'équivalent des tableaux associatifs de PHP, `collections.defaultdict` crée automatiquement une valeur vide pour une clé absente, et `.items()` parcourt à la fois les clés et les valeurs ;
+la comparaison de `tuples`, `attrgetter`, `continue`.
 
 ### Tests
 
@@ -31,3 +32,4 @@ les dictionnaires (`dict`) sont l'équivalent des tableaux associatifs de PHP, `
 - Test 5, repos de 11 heures : écrit seul, puis corrigé pendant la revue sur quatre points : un nom qui contredisait l'assertion, `violations != []` trop faible (vrai aussi pour `None`), `violations.__len__` sans parenthèses au lieu de `len(violations)`, et `datetime` au lieu de `date` pour le jour. Ce test a fait naître `Violation`, `RuleCategory` et la règle, écrite avec `itertools.pairwise`.
 - Test 6, postes de deux soignants différents : écrit seul. Il échouait bien avec la première version de la règle, qui comparait tous les postes qui se suivent dans la liste, quel que soit le soignant.
 - Test ajouté au plan, postes d'un soignant intercalés avec ceux d'un autre (A, B, A) : idée venue de la revue, test écrit seul. Une simple vérification du soignant dans la boucle l'aurait laissé échouer, car les deux postes de A ne se suivent pas dans la liste. Ce test m'a obligé à revoir la conception de la règle : l'IA m'a présenté deux approches, le regroupement par soignant ou le tri, et j'ai choisi et écrit le regroupement avec `collections.defaultdict`. La revue a fait retirer une condition sur le soignant devenue inutile.
+- Test 7 : postes dans le désordre. Test et correction écrits par moi. J’ai remplacé le regroupement par `defaultdict` par un tri unique avec `sorted()` et `operator.attrgetter("staff_id", "start")`. L’IA a vérifié l’échec du test avant la correction et contrôlé, en modifiant volontairement le code, que les tests existants protègent le tri et le saut entre soignants.
