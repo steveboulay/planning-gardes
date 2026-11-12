@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timedelta
 from enum import Enum
 
 
@@ -18,3 +18,8 @@ class Shift:
     def __post_init__(self) -> None:
         if self.end <= self.start:
             raise ValueError("Un poste doit se terminer après son début.")
+
+    @property
+    def duration(self) -> timedelta:
+        """Retourne la durée du poste."""
+        return self.end - self.start
