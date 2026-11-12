@@ -1,7 +1,7 @@
 from datetime import date, datetime, timedelta
 
 from planning_rules.models import RuleCategory, Shift, ShiftKind
-from planning_rules.rules import check_consecutive_nights, check_daily_rest
+from planning_rules.rules import check_consecutive_nights, check_daily_rest, check_weekly_hours
 
 
 def make_shift(
@@ -247,3 +247,11 @@ def test_nights_starting_at_different_hours_have_a_consecutive_nights_violation(
     assert violations[0].category == RuleCategory.COLLECTIVE
     assert violations[0].staff_id == "nurse-1"
     assert violations[0].day == date(2026, 11, 5)
+
+
+def test_empty_schedule_has_no_weekly_hours_violation():
+    violations = check_weekly_hours(
+        shifts=[],
+        max_hours=48,
+    )
+    assert violations == []
