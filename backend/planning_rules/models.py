@@ -1,11 +1,26 @@
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from enum import Enum
 
 
 class ShiftKind(Enum):
     DAY = "jour"
     NIGHT = "nuit"
+
+
+class RuleCategory(Enum):
+    LEGAL = "légale"
+    COLLECTIVE = "collective"
+    INDIVIDUAL = "individuelle"
+
+
+@dataclass(frozen=True)
+class Violation:
+    rule: str
+    category: RuleCategory
+    staff_id: str
+    day: date
+    message: str
 
 
 @dataclass(frozen=True)
