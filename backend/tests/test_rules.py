@@ -287,3 +287,21 @@ def test_hours_equal_to_maximum_have_no_weekly_hours_violation():
         max_duration=timedelta(hours=48),
     )
     assert violations == []
+
+
+def test_hours_above_maximum_have_a_weekly_hours_violation():
+    shifts = make_consecutive_shifts(
+        staff_id="nurse-1",
+        start=datetime(2026, 11, 3, 8, 0),
+        count=5,
+    )
+
+    violations = check_weekly_hours(
+        shifts=shifts,
+        max_duration=timedelta(hours=48),
+    )
+    assert len(violations) == 1
+    assert violations[0].rule == "heures_hebdomadaires"
+    assert violations[0].category == RuleCategory.LEGAL
+    assert violations[0].staff_id == "nurse-1"
+    assert violations[0].day == date(2026, 11, 2)
