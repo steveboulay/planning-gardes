@@ -268,7 +268,7 @@ def test_nights_starting_at_different_hours_have_a_consecutive_nights_violation(
 def test_empty_schedule_has_no_weekly_hours_violation():
     violations = check_weekly_hours(
         shifts=[],
-        max_hours=48,
+        max_duration=timedelta(hours=48),
     )
     assert violations == []
 
@@ -282,6 +282,6 @@ def test_hours_equal_to_maximum_have_no_weekly_hours_violation():
 
     violations = check_weekly_hours(
         shifts=shifts,
-        max_hours=48,
+        max_duration=timedelta(hours=48),
     )
     assert violations == []
