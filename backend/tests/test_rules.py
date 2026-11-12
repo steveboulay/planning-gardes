@@ -359,3 +359,20 @@ def test_sunday_night_counts_in_the_week_it_starts():
         max_duration=timedelta(hours=48),
     )
     assert violations == []
+
+
+def test_week_spanning_new_year_is_counted_as_one_week():
+    shifts = make_consecutive_shifts(
+        staff_id="nurse-1",
+        start=datetime(2026, 12, 29, 9, 0),
+        count=5,
+    )
+    violations = check_weekly_hours(
+        shifts=shifts,
+        max_duration=timedelta(hours=48),
+    )
+    assert len(violations) == 1
+    assert violations[0].rule == "heures_hebdomadaires"
+    assert violations[0].category == RuleCategory.LEGAL
+    assert violations[0].staff_id == "nurse-1"
+    assert violations[0].day == date(2026, 12, 28)
