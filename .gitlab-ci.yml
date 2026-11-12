@@ -22,4 +22,3 @@ backend:
     - uv run ruff format --check .
     - uv run pytest
     - uv cache prune --ci
-    
