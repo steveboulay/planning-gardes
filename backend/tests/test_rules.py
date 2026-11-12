@@ -305,3 +305,22 @@ def test_hours_above_maximum_have_a_weekly_hours_violation():
     assert violations[0].category == RuleCategory.LEGAL
     assert violations[0].staff_id == "nurse-1"
     assert violations[0].day == date(2026, 11, 2)
+
+
+def test_shifts_spread_over_two_weeks_have_no_weekly_hours_violation():
+    first_week_shifts = make_consecutive_shifts(
+        staff_id="nurse-1",
+        start=datetime(2026, 11, 5, 8, 0),
+        count=4,
+    )
+    second_week_shifts = make_consecutive_shifts(
+        staff_id="nurse-1",
+        start=datetime(2026, 11, 9, 8, 0),
+        count=4,
+    )
+
+    violations = check_weekly_hours(
+        shifts=first_week_shifts + second_week_shifts,
+        max_duration=timedelta(hours=48),
+    )
+    assert violations == []
