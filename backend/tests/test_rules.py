@@ -1,7 +1,7 @@
 from datetime import date, datetime, timedelta
 
 from planning_rules.models import RuleCategory, Shift, ShiftKind
-from planning_rules.rules import check_daily_rest
+from planning_rules.rules import check_consecutive_nights, check_daily_rest
 
 
 def make_shift(
@@ -16,6 +16,16 @@ def make_shift(
     """
 
     return Shift(staff_id=staff_id, start=start, end=start + duration, kind=kind)
+
+
+def make_night(
+    staff_id: str,
+    start: datetime,
+    duration: timedelta = timedelta(hours=12),
+) -> Shift:
+    """Retourne un poste de nuit pour les tests."""
+
+    return make_shift(staff_id=staff_id, start=start, duration=duration, kind=ShiftKind.NIGHT)
 
 
 def test_empty_schedule_has_no_daily_rest_violation():
@@ -106,5 +116,24 @@ def test_rest_equal_to_lower_minimum_has_no_daily_rest_violation():
     violations = check_daily_rest(
         shifts=[first_shift, second_shift],
         min_rest=timedelta(hours=11),
+    )
+    assert violations == []
+
+
+def test_empty_schedule_has_no_consecutive_nights_violation():
+    violations = check_consecutive_nights(
+        shifts=[],
+        max_nights=3,
+    )
+    assert violations == []
+
+
+def test_nights_equal_to_maximum_have_no_consecutive_nights_violation():
+    first_night = make_night(staff_id="nurse-1", start=datetime(2026, 11, 2, 20, 0))
+    second_night = make_night(staff_id="nurse-1", start=datetime(2026, 11, 3, 20, 0))
+    third_night = make_night(staff_id="nurse-1", start=datetime(2026, 11, 4, 20, 0))
+    violations = check_consecutive_nights(
+        shifts=[first_night, second_night, third_night],
+        max_nights=3,
     )
     assert violations == []
