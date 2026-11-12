@@ -75,3 +75,13 @@ def test_shifts_interleaved_with_another_staff_have_a_daily_rest_violation():
     assert violations[0].category == RuleCategory.LEGAL
     assert violations[0].staff_id == "nurse-1"
     assert violations[0].day == date(2026, 11, 3)
+
+
+def test_unsorted_shifts_have_no_daily_rest_violation():
+    first_shift = make_shift(staff_id="nurse-1", start=datetime(2026, 11, 3, 8, 0))
+    second_shift = make_shift(staff_id="nurse-1", start=datetime(2026, 11, 2, 8, 0))
+    violations = check_daily_rest(
+        shifts=[first_shift, second_shift],
+        min_rest=timedelta(hours=12),
+    )
+    assert violations == []
