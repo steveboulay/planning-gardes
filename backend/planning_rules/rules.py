@@ -1,6 +1,6 @@
-from collections import defaultdict
 from datetime import timedelta
 from itertools import pairwise
+from operator import attrgetter
 
 from planning_rules.models import RuleCategory, Shift, Violation
 
@@ -12,20 +12,24 @@ def check_daily_rest(shifts: list[Shift], min_rest: timedelta) -> list[Violation
     durée minimale reçue en paramètre.
     """
     violations: list[Violation] = []
-    by_staff: dict[str, list[Shift]] = defaultdict(list)
-    for shift in shifts:
-        by_staff[shift.staff_id].append(shift)
-    for staff_id, staff_shifts in by_staff.items():
-        for prev_shift, next_shift in pairwise(staff_shifts):
-            rest = next_shift.start - prev_shift.end
-            if rest < min_rest:
-                violations.append(
-                    Violation(
-                        rule="repos_quotidien",
-                        category=RuleCategory.LEGAL,
-                        staff_id=staff_id,
-                        day=next_shift.start.date(),
-                        message=(f"Soignant {staff_id} : repos de {rest} inférieur à {min_rest}."),
-                    )
+    sorted_shifts = sorted(shifts, key=attrgetter("staff_id", "start"))
+
+    for prev_shift, next_shift in pairwise(sorted_shifts):
+        if prev_shift.staff_id != next_shift.staff_id:
+            continue
+
+        rest_duration = next_shift.start - prev_shift.end
+        if rest_duration < min_rest:
+            violations.append(
+                Violation(
+                    rule="repos_quotidien",
+                    category=RuleCategory.LEGAL,
+                    staff_id=prev_shift.staff_id,
+                    day=next_shift.start.date(),
+                    message=(
+                        f"Soignant {prev_shift.staff_id} : repos de {rest_duration}"
+                        f" inférieur à {min_rest}."
+                    ),
                 )
+            )
     return violations
