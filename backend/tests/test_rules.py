@@ -28,6 +28,22 @@ def make_night(
     return make_shift(staff_id=staff_id, start=start, duration=duration, kind=ShiftKind.NIGHT)
 
 
+def make_consecutive_shifts(
+    staff_id: str,
+    start: datetime,
+    count: int,
+    kind: ShiftKind = ShiftKind.DAY,
+) -> list[Shift]:
+    """Retourne `count` postes consécutifs, à partir de `start`.
+
+    Un poste par défaut est un poste de jour de 12h.
+    """
+    return [
+        make_shift(staff_id=staff_id, start=start + timedelta(days=i), kind=kind)
+        for i in range(count)
+    ]
+
+
 def make_consecutive_nights(staff_id: str, start: datetime, count: int) -> list[Shift]:
     """Retourne `count` postes de nuit consécutifs, à partir de `start`."""
 
@@ -252,6 +268,20 @@ def test_nights_starting_at_different_hours_have_a_consecutive_nights_violation(
 def test_empty_schedule_has_no_weekly_hours_violation():
     violations = check_weekly_hours(
         shifts=[],
+        max_hours=48,
+    )
+    assert violations == []
+
+
+def test_hours_equal_to_maximum_have_no_weekly_hours_violation():
+    shifts = make_consecutive_shifts(
+        staff_id="nurse-1",
+        start=datetime(2026, 11, 2, 8, 0),
+        count=4,
+    )
+
+    violations = check_weekly_hours(
+        shifts=shifts,
         max_hours=48,
     )
     assert violations == []
