@@ -47,7 +47,9 @@ def make_consecutive_shifts(
 def make_consecutive_nights(staff_id: str, start: datetime, count: int) -> list[Shift]:
     """Retourne `count` postes de nuit consécutifs, à partir de `start`."""
 
-    return [make_night(staff_id=staff_id, start=start + timedelta(days=i)) for i in range(count)]
+    return make_consecutive_shifts(
+        staff_id=staff_id, start=start, count=count, kind=ShiftKind.NIGHT
+    )
 
 
 def test_empty_schedule_has_no_daily_rest_violation():
