@@ -18,8 +18,13 @@ Ce projet est développé avec l'aide de Claude (Anthropic). J'écris le code et
 - **Proposé :** le premier test (`pytest.raises`) et la classe `Shift` (dataclass figée, enum `ShiftKind`, contrôle dans `__post_init__`), expliqués ligne par ligne avec leurs équivalents PHP.
 - **Gardé / corrigé :** gardé tel quel. Écrit en trois temps : le test seul (échec à l'import), la classe sans contrôle (échec « DID NOT RAISE »), puis le contrôle (succès).
 - **Vérifié par :** pytest et ruff en local, puis le pipeline de la merge request.
-- **Appris :** Python ne vérifie pas les types annotés à l'exécution, contrairement à PHP ; `@dataclass` génère le constructeur à partir des champs ; l'indentation délimite les blocs.
+- **Appris :** Python ne vérifie pas les types annotés à l'exécution, contrairement à PHP ; `@dataclass` génère le constructeur à partir des champs ; l'indentation délimite les blocs ;
+`len()` est une fonction et pas une méthode, `date` et `datetime` sont deux types distincts, et `git reset --soft` permet de refaire un commit.
 
 ### Tests
 
 - Test 1, poste qui finit avant de commencer : écrit avec l'IA, ligne par ligne.
+- Test 2, durée d'un poste de nuit à cheval sur minuit : écrit seul. Nom traduit par l'IA ; deux corrections pendant la revue, la comparaison avec `12` au lieu d'un `timedelta`, et l'import manquant de `timedelta`.
+- Test 3, planning vide sans infraction de repos : écrit à partir de squelettes à trous fournis par l'IA, pour le test comme pour la fonction. Nom proposé par l'IA. La revue a montré que `assert not violations` laissait passer une fonction qui renvoie `None` : remplacé par `assert violations == []`.
+- Test 4, repos égal au minimum (12 heures pile) : écrit seul, nom corrigé pendant la revue. Passé du premier coup, puisque la règle renvoyait encore une liste vide. Vérifié après le test 5 : en remplaçant `<` par `<=` dans la règle, il échoue.
+- Test 5, repos de 11 heures : écrit seul, puis corrigé pendant la revue sur quatre points : un nom qui contredisait l'assertion, `violations != []` trop faible (vrai aussi pour `None`), `violations.__len__` sans parenthèses au lieu de `len(violations)`, et `datetime` au lieu de `date` pour le jour. Ce test a fait naître `Violation`, `RuleCategory` et la règle, écrite avec `itertools.pairwise`.
