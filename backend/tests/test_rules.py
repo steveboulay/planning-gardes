@@ -343,3 +343,19 @@ def test_shifts_of_different_staff_have_no_weekly_hours_violation():
         max_duration=timedelta(hours=48),
     )
     assert violations == []
+
+
+def test_sunday_night_counts_in_the_week_it_starts():
+    sunday_nights = make_consecutive_nights(
+        staff_id="nurse-1", start=datetime(2026, 11, 8, 20, 0), count=1
+    )
+    next_week_shifts = make_consecutive_shifts(
+        staff_id="nurse-1",
+        start=datetime(2026, 11, 9, 9, 0),
+        count=4,
+    )
+    violations = check_weekly_hours(
+        shifts=sunday_nights + next_week_shifts,
+        max_duration=timedelta(hours=48),
+    )
+    assert violations == []
