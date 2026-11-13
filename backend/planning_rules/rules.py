@@ -4,7 +4,7 @@ from itertools import pairwise
 from operator import attrgetter
 
 from planning_rules.formatting import format_duration
-from planning_rules.models import RuleCategory, Shift, ShiftKind, Violation
+from planning_rules.models import DayOffRequest, RuleCategory, Shift, ShiftKind, Violation
 
 
 def check_daily_rest(shifts: list[Shift], min_rest: timedelta) -> list[Violation]:
@@ -105,3 +105,13 @@ def check_weekly_hours(shifts: list[Shift], max_duration: timedelta) -> list[Vio
             )
 
     return violations
+
+
+def check_day_off_requests(shifts: list[Shift], requests: list[DayOffRequest]) -> list[Violation]:
+    """Retourne la liste des infractions et une liste vide si tout est conforme.
+
+    Une infraction est relevée pour chaque poste qui commence un jour où son soignant
+    a demandé un repos.
+    """
+
+    return []

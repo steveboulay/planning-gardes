@@ -38,3 +38,9 @@ class Shift:
     def duration(self) -> timedelta:
         """Retourne la durée du poste."""
         return self.end - self.start
+
+
+@dataclass(frozen=True)
+class DayOffRequest:
+    staff_id: str
+    day: date
