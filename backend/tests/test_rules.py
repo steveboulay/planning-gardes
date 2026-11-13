@@ -5,6 +5,7 @@ from planning_rules.rules import (
     check_consecutive_nights,
     check_daily_rest,
     check_day_off_requests,
+    check_schedule,
     check_weekly_hours,
 )
 
@@ -450,4 +451,9 @@ def test_night_ending_on_requested_day_off_has_no_violation():
         shifts=[night],
         requests=[day_off_request],
     )
+    assert violations == []
+
+
+def test_empty_schedule_has_no_violation():
+    violations = check_schedule(shifts=[])
     assert violations == []
