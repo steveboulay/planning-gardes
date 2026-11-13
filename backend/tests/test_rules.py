@@ -1,6 +1,6 @@
 from datetime import date, datetime, timedelta
 
-from planning_rules.models import DayOffRequest, RuleCategory, Shift, ShiftKind
+from planning_rules.models import DayOffRequest, RuleCategory, RulesConfig, Shift, ShiftKind
 from planning_rules.rules import (
     check_consecutive_nights,
     check_daily_rest,
@@ -500,3 +500,29 @@ def test_schedule_combines_violations_of_all_rules_sorted_by_day():
         (date(2026, 11, 6), "nurse-1", "repos_quotidien"),
         (date(2026, 11, 6), "nurse-2", "nuits_consecutives"),
     ]
+
+
+def test_schedule_uses_given_config():
+    shifts = [
+        make_shift(staff_id="nurse-1", start=datetime(2026, 11, 2, 8, 0)),
+        make_shift(staff_id="nurse-1", start=datetime(2026, 11, 3, 7, 0)),
+    ]
+    shifts += make_consecutive_nights(
+        staff_id="nurse-2",
+        start=datetime(2026, 11, 3, 20, 0),
+        count=4,
+    )
+    shifts += make_consecutive_shifts(
+        staff_id="nurse-3",
+        start=datetime(2026, 11, 2, 8, 0),
+        count=5,
+    )
+    violations = check_schedule(
+        shifts=shifts,
+        config=RulesConfig(
+            min_daily_rest=timedelta(hours=11),
+            max_weekly_duration=timedelta(hours=60),
+            max_consecutive_nights=4,
+        ),
+    )
+    assert violations == []
