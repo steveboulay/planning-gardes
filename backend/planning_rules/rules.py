@@ -38,8 +38,9 @@ def check_daily_rest(shifts: list[Shift], min_rest: timedelta) -> list[Violation
                     staff_id=prev_shift.staff_id,
                     day=next_shift.start.date(),
                     message=(
-                        f"Soignant {prev_shift.staff_id} : repos de {rest_duration}"
-                        f" inférieur à {min_rest}."
+                        f"Soignant {prev_shift.staff_id} :"
+                        f" repos de {format_duration(rest_duration)}"
+                        f" inférieur à {format_duration(min_rest)}."
                     ),
                 )
             )
@@ -98,8 +99,6 @@ def check_weekly_hours(shifts: list[Shift], max_duration: timedelta) -> list[Vio
 
     for (staff_id, iso_year, iso_week), total_duration in duration_by_staff_week.items():
         if total_duration > max_duration:
-            formatted_duration = format_duration(total_duration)
-            formatted_max_duration = format_duration(max_duration)
             violations.append(
                 Violation(
                     rule="heures_hebdomadaires",
@@ -107,8 +106,9 @@ def check_weekly_hours(shifts: list[Shift], max_duration: timedelta) -> list[Vio
                     staff_id=staff_id,
                     day=date.fromisocalendar(iso_year, iso_week, 1),
                     message=(
-                        f"Soignant {staff_id} : durée hebdomadaire de {formatted_duration}"
-                        f" supérieure à {formatted_max_duration}."
+                        f"Soignant {staff_id} :"
+                        f" durée hebdomadaire de {format_duration(total_duration)}"
+                        f" supérieure à {format_duration(max_duration)}."
                     ),
                 )
             )
