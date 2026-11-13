@@ -487,7 +487,10 @@ def test_schedule_combines_violations_of_all_rules_sorted_by_day():
         )
     ]
 
-    requests = [DayOffRequest(staff_id="nurse-4", day=date(2026, 11, 5))]
+    requests = [
+        DayOffRequest(staff_id="nurse-1", day=date(2026, 11, 6)),
+        DayOffRequest(staff_id="nurse-4", day=date(2026, 11, 5)),
+    ]
 
     violations = check_schedule(shifts=shifts, requests=requests)
     assert [(v.day, v.staff_id, v.rule) for v in violations] == [
