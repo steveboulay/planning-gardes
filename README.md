@@ -77,7 +77,6 @@ La CI GitLab lance les mêmes commandes à chaque push.
 - Les dates n'ont pas de fuseau horaire. Une nuit qui traverse un changement d'heure dure en réalité 11 ou 13 heures.
 - La durée hebdomadaire est comptée par semaine civile, du lundi au dimanche, alors que la réglementation raisonne sur toute période de sept jours.
 - Deux postes qui se chevauchent apparaissent comme un repos négatif, sans règle dédiée.
-- Deux nuits du même soignant qui commencent le même jour comptent pour deux nuits dans la série.
 - Une demande de repos saisie deux fois donne deux infractions.
 - Une nuit qui commence la veille d'un jour de repos demandé et se termine ce jour-là n'est pas une infraction : la règle porte sur le jour où le poste commence.
 
