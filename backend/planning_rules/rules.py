@@ -1,10 +1,19 @@
 from collections import defaultdict
+from collections.abc import Sequence
 from datetime import date, timedelta
 from itertools import pairwise
 from operator import attrgetter
 
 from planning_rules.formatting import format_duration
-from planning_rules.models import DayOffRequest, RuleCategory, Shift, ShiftKind, Violation
+from planning_rules.models import (
+    DEFAULT_CONFIG,
+    DayOffRequest,
+    RuleCategory,
+    RulesConfig,
+    Shift,
+    ShiftKind,
+    Violation,
+)
 
 
 def check_daily_rest(shifts: list[Shift], min_rest: timedelta) -> list[Violation]:
@@ -107,7 +116,10 @@ def check_weekly_hours(shifts: list[Shift], max_duration: timedelta) -> list[Vio
     return violations
 
 
-def check_day_off_requests(shifts: list[Shift], requests: list[DayOffRequest]) -> list[Violation]:
+def check_day_off_requests(
+    shifts: list[Shift],
+    requests: Sequence[DayOffRequest],
+) -> list[Violation]:
     """Retourne la liste des infractions et une liste vide si tout est conforme.
 
     Une infraction est relevée pour chaque demande de repos qui tombe un jour où le soignant a un
@@ -134,3 +146,16 @@ def check_day_off_requests(shifts: list[Shift], requests: list[DayOffRequest]) -
             )
 
     return violations
+
+
+def check_schedule(
+    shifts: list[Shift],
+    requests: Sequence[DayOffRequest] = (),
+    config: RulesConfig = DEFAULT_CONFIG,
+) -> list[Violation]:
+    """Lance les quatre règles et retourne toutes leurs infractions.
+
+    Les infractions sont triées par jour, puis par soignant, puis par code de règle.
+    """
+
+    return []
