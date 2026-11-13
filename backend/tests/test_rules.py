@@ -18,16 +18,6 @@ def make_shift(
     return Shift(staff_id=staff_id, start=start, end=start + duration, kind=kind)
 
 
-def make_night(
-    staff_id: str,
-    start: datetime,
-    duration: timedelta = timedelta(hours=12),
-) -> Shift:
-    """Retourne un poste de nuit pour les tests."""
-
-    return make_shift(staff_id=staff_id, start=start, duration=duration, kind=ShiftKind.NIGHT)
-
-
 def make_consecutive_shifts(
     staff_id: str,
     start: datetime,
