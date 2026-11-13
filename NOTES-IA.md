@@ -32,7 +32,7 @@ Ce projet est développé avec l'aide de Claude (Anthropic). J'écris le code et
   - Les compréhensions de liste et les expressions génératrices.
   - `+` met deux listes bout à bout.
   - Un test vert ne prouve rien tant qu'on ne l'a pas vu échouer : on le vérifie en réintroduisant l'erreur qu'il vise.
-    - `isocalendar()` et l'année ISO : la semaine 53 de 2026 va du lundi 28 décembre 2026 au dimanche 3 janvier 2027.
+  - `isocalendar()` et l'année ISO : la semaine 53 de 2026 va du lundi 28 décembre 2026 au dimanche 3 janvier 2027.
   - `divmod()` découpe une durée en heures et en minutes.
   - L'ordre des arguments de `datetime` : année, mois, jour, heure, minute.
   - Ce qui n'est pas une règle va dans son propre module, et les imports partent de `backend/`, pas de la racine du dépôt.
