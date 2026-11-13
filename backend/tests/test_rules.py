@@ -263,6 +263,28 @@ def test_nights_starting_at_different_hours_have_a_consecutive_nights_violation(
     assert violations[0].day == date(2026, 11, 5)
 
 
+def test_two_nights_starting_the_same_day_count_as_one():
+    nights = make_consecutive_nights(
+        staff_id="nurse-1",
+        start=datetime(2026, 11, 2, 20, 0),
+        count=3,
+    )
+
+    nights.append(
+        make_shift(
+            staff_id="nurse-1",
+            start=datetime(2026, 11, 3, 19, 0),
+            kind=ShiftKind.NIGHT,
+        )
+    )
+
+    violations = check_consecutive_nights(
+        shifts=nights,
+        max_nights=3,
+    )
+    assert violations == []
+
+
 def test_empty_schedule_has_no_weekly_hours_violation():
     violations = check_weekly_hours(
         shifts=[],
