@@ -1,6 +1,6 @@
 from datetime import date, datetime, timedelta
 
-from planning_rules.models import RuleCategory, Shift, ShiftKind
+from planning_rules.models import DayOffRequest, RuleCategory, Shift, ShiftKind
 from planning_rules.rules import (
     check_consecutive_nights,
     check_daily_rest,
@@ -379,3 +379,21 @@ def test_empty_schedule_has_no_day_off_request_violation():
         requests=[],
     )
     assert violations == []
+
+
+def test_shift_on_requested_day_off_has_a_day_off_request_violation():
+    shifts = make_consecutive_shifts(
+        staff_id="nurse-1",
+        start=datetime(2026, 11, 4, 9, 0),
+        count=2,
+    )
+    day_off_request = DayOffRequest(staff_id="nurse-1", day=date(2026, 11, 4))
+    violations = check_day_off_requests(
+        shifts=shifts,
+        requests=[day_off_request],
+    )
+    assert len(violations) == 1
+    assert violations[0].rule == "desiderata"
+    assert violations[0].category == RuleCategory.INDIVIDUAL
+    assert violations[0].staff_id == "nurse-1"
+    assert violations[0].day == date(2026, 11, 4)
