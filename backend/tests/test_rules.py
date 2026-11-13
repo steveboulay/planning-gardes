@@ -436,3 +436,18 @@ def test_day_off_request_of_another_staff_has_no_violation():
         requests=[nurse2_day_off_request],
     )
     assert violations == []
+
+
+def test_night_ending_on_requested_day_off_has_no_violation():
+    night = make_shift(
+        staff_id="nurse-1",
+        start=datetime(2026, 11, 3, 20, 0),
+        kind=ShiftKind.NIGHT,
+    )
+
+    day_off_request = DayOffRequest(staff_id="nurse-1", day=date(2026, 11, 4))
+    violations = check_day_off_requests(
+        shifts=[night],
+        requests=[day_off_request],
+    )
+    assert violations == []
