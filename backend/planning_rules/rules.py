@@ -16,12 +16,13 @@ from planning_rules.models import (
 )
 
 
-def check_daily_rest(shifts: list[Shift], min_rest: timedelta) -> list[Violation]:
+def check_daily_rest(shifts: Sequence[Shift], min_rest: timedelta) -> list[Violation]:
     """Retourne la liste des infractions et une liste vide si tout est conforme.
 
     Une infraction est relevée si l'écart entre deux postes du même soignant est inférieur à la
     durée minimale reçue en paramètre.
     """
+
     violations: list[Violation] = []
     sorted_shifts = sorted(shifts, key=attrgetter("staff_id", "start"))
 
@@ -46,12 +47,13 @@ def check_daily_rest(shifts: list[Shift], min_rest: timedelta) -> list[Violation
     return violations
 
 
-def check_consecutive_nights(shifts: list[Shift], max_nights: int) -> list[Violation]:
+def check_consecutive_nights(shifts: Sequence[Shift], max_nights: int) -> list[Violation]:
     """Retourne la liste des infractions et une liste vide si tout est conforme.
 
     Une infraction est relevée si le nombre de nuits consécutives est supérieur au maximum.
     Deux nuits du même soignant qui commencent le même jour ne comptent qu'une fois.
     """
+
     violations: list[Violation] = []
     night_shifts = sorted(
         (s for s in shifts if s.kind == ShiftKind.NIGHT),
@@ -83,20 +85,22 @@ def check_consecutive_nights(shifts: list[Shift], max_nights: int) -> list[Viola
     return violations
 
 
-def check_weekly_hours(shifts: list[Shift], max_duration: timedelta) -> list[Violation]:
+def check_weekly_hours(
+    shifts: Sequence[Shift],
+    max_duration: timedelta,
+) -> list[Violation]:
     """Retourne la liste des infractions et une liste vide si tout est conforme.
 
     Une infraction est relevée si un soignant dépasse `max_duration` sur une semaine,
     du lundi au dimanche. Un poste compte dans la semaine où il commence.
     """
 
+    violations: list[Violation] = []
     duration_by_staff_week: dict[tuple[str, int, int], timedelta] = defaultdict(timedelta)
 
     for shift in shifts:
         iso = shift.start.isocalendar()
         duration_by_staff_week[(shift.staff_id, iso.year, iso.week)] += shift.duration
-
-    violations: list[Violation] = []
 
     for (staff_id, iso_year, iso_week), total_duration in duration_by_staff_week.items():
         if total_duration > max_duration:
@@ -118,7 +122,7 @@ def check_weekly_hours(shifts: list[Shift], max_duration: timedelta) -> list[Vio
 
 
 def check_day_off_requests(
-    shifts: list[Shift],
+    shifts: Sequence[Shift],
     requests: Sequence[DayOffRequest],
 ) -> list[Violation]:
     """Retourne la liste des infractions et une liste vide si tout est conforme.
@@ -127,9 +131,8 @@ def check_day_off_requests(
     poste qui commence.
     """
 
-    worked_days: set[tuple[str, date]] = {(shift.staff_id, shift.start.date()) for shift in shifts}
-
     violations: list[Violation] = []
+    worked_days: set[tuple[str, date]] = {(shift.staff_id, shift.start.date()) for shift in shifts}
 
     for request in requests:
         if (request.staff_id, request.day) in worked_days:
@@ -150,7 +153,7 @@ def check_day_off_requests(
 
 
 def check_schedule(
-    shifts: list[Shift],
+    shifts: Sequence[Shift],
     requests: Sequence[DayOffRequest] = (),
     config: RulesConfig = DEFAULT_CONFIG,
 ) -> list[Violation]:

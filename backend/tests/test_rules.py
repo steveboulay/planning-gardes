@@ -18,7 +18,7 @@ def make_shift(
 ) -> Shift:
     """Retourne un poste pour les tests.
 
-    Un poste par défaut est un poste de jour de 12h.
+    Un poste par défaut est un poste de jour de 12 heures.
     """
 
     return Shift(staff_id=staff_id, start=start, end=start + duration, kind=kind)
@@ -32,7 +32,7 @@ def make_consecutive_shifts(
 ) -> list[Shift]:
     """Retourne `count` postes consécutifs, à partir de `start`.
 
-    Un poste par défaut est un poste de jour de 12h.
+    Un poste par défaut est un poste de jour de 12 heures.
     """
     return [
         make_shift(staff_id=staff_id, start=start + timedelta(days=i), kind=kind)
