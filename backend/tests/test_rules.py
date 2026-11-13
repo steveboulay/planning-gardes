@@ -397,3 +397,28 @@ def test_shift_on_requested_day_off_has_a_day_off_request_violation():
     assert violations[0].category == RuleCategory.INDIVIDUAL
     assert violations[0].staff_id == "nurse-1"
     assert violations[0].day == date(2026, 11, 4)
+
+
+def test_two_shifts_on_requested_day_off_have_a_single_violation():
+    shifts = [
+        make_shift(
+            staff_id="nurse-1",
+            start=datetime(2026, 11, 4, 9, 0),
+            duration=timedelta(hours=4),
+        ),
+        make_shift(
+            staff_id="nurse-1",
+            start=datetime(2026, 11, 4, 15, 0),
+            duration=timedelta(hours=4),
+        ),
+    ]
+    day_off_request = DayOffRequest(staff_id="nurse-1", day=date(2026, 11, 4))
+    violations = check_day_off_requests(
+        shifts=shifts,
+        requests=[day_off_request],
+    )
+    assert len(violations) == 1
+    assert violations[0].rule == "desiderata"
+    assert violations[0].category == RuleCategory.INDIVIDUAL
+    assert violations[0].staff_id == "nurse-1"
+    assert violations[0].day == date(2026, 11, 4)
