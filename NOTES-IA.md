@@ -12,12 +12,24 @@ Ce projet est développé avec l'aide de Claude (Anthropic). J'écris le code et
   - Une règle de ma configuration Git globale ignorait `.vscode/` sur un seul de mes deux postes. Retirée.
 - **Vérifié par :** `ruff check`, `ruff format --check` et `pytest` en local, puis le pipeline GitLab, vert après la vérification d'identité du compte.
 
-## 2026-11-12 · Étape 1 : moteur de règles (en cours)
+## 2026-11-12 · Étape 1 : moteur de règles
 
-- **Demandé à l'IA :** le découpage de l'étape en 18 tests, et un accompagnement pas à pas pour le premier, car je n'avais jamais écrit de Python.
-- **Proposé :** le premier test (`pytest.raises`) et la classe `Shift` (dataclass figée, enum `ShiftKind`, contrôle dans `__post_init__`), expliqués ligne par ligne avec leurs équivalents PHP.
-- **Gardé / corrigé :** gardé tel quel. Écrit en trois temps : le test seul (échec à l'import), la classe sans contrôle (échec « DID NOT RAISE »), puis le contrôle (succès).
-- **Vérifié par :** pytest et ruff en local, puis le pipeline de la merge request.
+- **Demandé à l'IA :** le découpage de l'étape en tests, un accompagnement pas à pas pour le premier, car je n'avais jamais écrit de Python, puis une revue de chaque test et de chaque règle, sans la solution : l'IA donnait les notions et les pistes, j'écrivais le code.
+- **Proposé :**
+  - le premier test et la classe `Shift`, expliqués ligne par ligne avec leurs équivalents PHP ;
+  - pour la suite, des noms de tests, des pistes (tri, regroupement, ensembles, semaines ISO) et les cas limites à couvrir ;
+  - pour chaque test vert dès le premier lancement, l'erreur à réintroduire pour vérifier qu'il sait échouer ;
+  - le premier jet du README, rédigé à partir du code.
+- **Gardé / corrigé :**
+  - Plusieurs de mes choix ont remplacé les pistes de l'IA : un tri unique sur `attrgetter("staff_id", "start")` au lieu d'un regroupement, `isocalendar()` au lieu de `weekday()`, une infraction par demande de repos plutôt que par poste, un plafond hebdomadaire exprimé en `timedelta`.
+  - L'IA s'est trompée au moins deux fois : elle a invoqué la règle B008 à tort pour un `timedelta`, et elle a compté une longueur de ligne en octets au lieu de caractères.
+  - Deux règles ont été écrites avant leurs tests (nuits consécutives, heures hebdomadaires). La première a été rattrapée par des tests vérifiés un à un ; la seconde, mise de côté jusqu'à l'échec de son test.
+  - La revue a trouvé plusieurs tests qui ne pouvaient pas échouer : données mal choisies, mauvais soignant, poste de jour à la place d'une nuit. Tous ont été corrigés.
+  - Limite conservée : les postes qui se chevauchent. Deux approches ont été envisagées, refuser le planning ou créer une règle dédiée ; le choix est reporté.
+- **Vérifié par :** ruff et pytest en local, le pipeline GitLab à chaque push, et, pour chaque test vert dès le premier lancement, la réintroduction volontaire de l'erreur qu'il vise. La CI a rattrapé deux oublis : une règle non commitée, et un résultat attendu manquant dans un test.
+- **Bilan :** quatre règles, `check_schedule` et `RulesConfig`, couverts par 41 tests.
+  - Ce qui a bien marché : écrire le test d'abord, quand je l'ai fait ; vérifier chaque test en réintroduisant une erreur, ce qui a démasqué plusieurs tests inutiles ; une revue qui donne des pistes sans la solution, ce qui m'a obligé à comprendre chaque ligne.
+  - Ce qui a moins bien marché : écrire le code avant le test quand l'idée était déjà en tête ; le copier-coller d'un test à l'autre, à l'origine de la plupart des erreurs (mauvais soignant, mauvaise date, mauvais type de poste) ; un fichier oublié dans un commit.
 - **Appris :**
   - Python ne vérifie pas les types annotés à l'exécution, contrairement à PHP.
   - `@dataclass` génère le constructeur à partir des champs.
@@ -44,6 +56,8 @@ Ce projet est développé avec l'aide de Claude (Anthropic). J'écris le code et
   - `collections.abc.Sequence` pour un paramètre qui accepte une liste ou un tuple.
   - Le tri de Python est stable : à égalité de clé, l'ordre de départ est conservé.
   - On ne remplit jamais les valeurs attendues d'un test en recopiant la sortie du code.
+  - `git rm` supprime un fichier et prépare sa suppression dans le même geste.
+  - Sans licence, un dépôt public peut être lu mais pas réutilisé : la licence MIT donne ce droit, sans garantie.
 
 ### Tests
 
@@ -74,3 +88,7 @@ Ce projet est développé avec l'aide de Claude (Anthropic). J'écris le code et
 - `test_empty_schedule_has_no_violation`, puis le squelette de `check_schedule` : écrits seul. Essai fait à la demande de l'IA : avec `config=RulesConfig()` en valeur par défaut, pytest passe, mais ruff signale B008, car une valeur par défaut n'est évaluée qu'une fois ; remplacée par la constante `DEFAULT_CONFIG`. `requests` reçoit `()` et le type `Sequence`, qui accepte les listes comme les tuples.
 - `test_schedule_combines_violations_of_all_rules_sorted_by_day`, puis `check_schedule` : données construites seul, un soignant par règle, avec deux infractions le même jour. Assertion par comparaison de triplets (jour, soignant, règle), technique proposée par l'IA. Deux dates attendues d'abord mal calculées (le premier poste au lieu du second, la première nuit au lieu de la quatrième), corrigées pendant la revue. La revue a aussi relevé que la clé de tri oubliait le code de la règle, ce que le test ne pouvait pas voir : j'ai ajouté une demande de repos pour créer deux infractions le même jour chez le même soignant. Le triplet correspondant avait d'abord été oublié ; la CI l'a signalé. Vérifié en retirant une règle, le tri, puis chaque critère de la clé.
 - `test_schedule_uses_given_config` : écrit seul. Un soignant par seuil, chacun exactement à la limite de la configuration reçue (11 heures de repos, 4 nuits, 60 heures), alors que la configuration par défaut donnerait trois infractions. Vérifié en remplaçant tour à tour chaque seuil reçu par celui de `DEFAULT_CONFIG` : le test échoue à chaque fois.
+- `test_two_nights_starting_the_same_day_count_as_one`, puis la correction de `check_consecutive_nights` : écrits seul, pour lever une limite que je trouvais dommage de laisser dans le README. Le test passait d'abord pour une mauvaise raison : le poste ajouté était un poste de jour, ignoré par la règle ; la revue l'a relevé. Un troisième cas dans la boucle, même soignant et même jour de début, passe à la paire suivante sans toucher au compteur. Vérifié en retirant ce cas : le test échoue.
+- Nettoyage : `format_duration` dans le message de `check_daily_rest`, à la place des durées brutes (« -2 days, 12:00:00 »), et suppression de `test_socle.py`, devenu inutile.
+- README et licence MIT : premier jet du README rédigé par l'IA à partir du code, relu, et exemple exécuté pour vérifier la sortie affichée.
+- `test_two_nights_starting_the_same_day_count_as_one`, puis la correction de `check_consecutive_nights` : écrits seul, pour lever une limite que je trouvais dommage de laisser dans le README. Le test passait d'abord pour une mauvaise raison : le poste ajouté était un poste de jour, ignoré par la règle ; la revue l'a relevé. Un troisième cas dans la boucle, même soignant et même jour de début, passe à la paire suivante sans toucher au compteur. Vérifié en retirant ce cas : le test échoue. Les conditions ont ensuite été simplifiées avec deux variables locales, `same_staff` et `day_gap`, sur une suggestion de la revue.
