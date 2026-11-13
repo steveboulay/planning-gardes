@@ -110,8 +110,27 @@ def check_weekly_hours(shifts: list[Shift], max_duration: timedelta) -> list[Vio
 def check_day_off_requests(shifts: list[Shift], requests: list[DayOffRequest]) -> list[Violation]:
     """Retourne la liste des infractions et une liste vide si tout est conforme.
 
-    Une infraction est relevée pour chaque poste qui commence un jour où son soignant
-    a demandé un repos.
+    Une infraction est relevée pour chaque demande de repos qui tombe un jour où le soignant a un
+    poste qui commence.
     """
 
-    return []
+    worked_days: set[tuple[str, date]] = {(shift.staff_id, shift.start.date()) for shift in shifts}
+
+    violations: list[Violation] = []
+
+    for request in requests:
+        if (request.staff_id, request.day) in worked_days:
+            violations.append(
+                Violation(
+                    rule="desiderata",
+                    category=RuleCategory.INDIVIDUAL,
+                    staff_id=request.staff_id,
+                    day=request.day,
+                    message=(
+                        f"Soignant {request.staff_id} : poste le {request.day:%d/%m/%Y},"
+                        " jour de repos demandé."
+                    ),
+                )
+            )
+
+    return violations
