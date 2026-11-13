@@ -28,7 +28,6 @@ def check_daily_rest(shifts: list[Shift], min_rest: timedelta) -> list[Violation
     for prev_shift, next_shift in pairwise(sorted_shifts):
         if prev_shift.staff_id != next_shift.staff_id:
             continue
-
         rest_duration = next_shift.start - prev_shift.end
         if rest_duration < min_rest:
             violations.append(
@@ -51,6 +50,7 @@ def check_consecutive_nights(shifts: list[Shift], max_nights: int) -> list[Viola
     """Retourne la liste des infractions et une liste vide si tout est conforme.
 
     Une infraction est relevée si le nombre de nuits consécutives est supérieur au maximum.
+    Deux nuits du même soignant qui commencent le même jour ne comptent qu'une fois.
     """
     violations: list[Violation] = []
     night_shifts = sorted(
@@ -60,10 +60,11 @@ def check_consecutive_nights(shifts: list[Shift], max_nights: int) -> list[Viola
 
     consecutive_count = 1
     for prev_shift, next_shift in pairwise(night_shifts):
-        if (
-            prev_shift.staff_id != next_shift.staff_id
-            or next_shift.start.date() - prev_shift.start.date() > timedelta(days=1)
-        ):
+        same_staff = prev_shift.staff_id == next_shift.staff_id
+        day_gap = next_shift.start.date() - prev_shift.start.date()
+        if same_staff and day_gap == timedelta(days=0):
+            continue
+        if not same_staff or day_gap > timedelta(days=1):
             consecutive_count = 1
             continue
         consecutive_count += 1
