@@ -44,3 +44,13 @@ class Shift:
 class DayOffRequest:
     staff_id: str
     day: date
+
+
+@dataclass(frozen=True)
+class RulesConfig:
+    min_daily_rest: timedelta = timedelta(hours=12)
+    max_consecutive_nights: int = 3
+    max_weekly_duration: timedelta = timedelta(hours=48)
+
+
+DEFAULT_CONFIG = RulesConfig()
