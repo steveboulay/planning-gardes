@@ -496,6 +496,7 @@ def test_schedule_combines_violations_of_all_rules_sorted_by_day():
     assert [(v.day, v.staff_id, v.rule) for v in violations] == [
         (date(2026, 11, 2), "nurse-3", "heures_hebdomadaires"),
         (date(2026, 11, 5), "nurse-4", "desiderata"),
+        (date(2026, 11, 6), "nurse-1", "desiderata"),
         (date(2026, 11, 6), "nurse-1", "repos_quotidien"),
         (date(2026, 11, 6), "nurse-2", "nuits_consecutives"),
     ]
