@@ -6,6 +6,7 @@
     "python.testing.cwd": "${workspaceFolder}/backend",
     "[python]": {
         "editor.defaultFormatter": "charliermarsh.ruff",
-        "editor.formatOnSave": true
+        "editor.formatOnSave": true,
+        "editor.rulers": [100]
     }
 }
