@@ -158,4 +158,24 @@ def check_schedule(
     Les infractions sont triées par jour, puis par soignant, puis par code de règle.
     """
 
-    return []
+    violations = (
+        check_daily_rest(
+            shifts=shifts,
+            min_rest=config.min_daily_rest,
+        )
+        + check_consecutive_nights(
+            shifts=shifts,
+            max_nights=config.max_consecutive_nights,
+        )
+        + check_weekly_hours(
+            shifts=shifts,
+            max_duration=config.max_weekly_duration,
+        )
+        + check_day_off_requests(
+            shifts=shifts,
+            requests=requests,
+        )
+    )
+    violations.sort(key=attrgetter("day", "staff_id", "rule"))
+
+    return violations
