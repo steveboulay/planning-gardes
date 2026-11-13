@@ -457,3 +457,42 @@ def test_night_ending_on_requested_day_off_has_no_violation():
 def test_empty_schedule_has_no_violation():
     violations = check_schedule(shifts=[])
     assert violations == []
+
+
+def test_schedule_combines_violations_of_all_rules_sorted_by_day():
+    shifts = [
+        make_shift(
+            staff_id="nurse-1",
+            start=datetime(2026, 11, 5, 8, 0),
+        ),
+        make_shift(
+            staff_id="nurse-1",
+            start=datetime(2026, 11, 6, 7, 0),
+        ),
+    ]
+    shifts += make_consecutive_nights(
+        staff_id="nurse-2",
+        start=datetime(2026, 11, 3, 20, 0),
+        count=4,
+    )
+    shifts += make_consecutive_shifts(
+        staff_id="nurse-3",
+        start=datetime(2026, 11, 2, 8, 0),
+        count=5,
+    )
+    shifts += [
+        make_shift(
+            staff_id="nurse-4",
+            start=datetime(2026, 11, 5, 8, 0),
+        )
+    ]
+
+    requests = [DayOffRequest(staff_id="nurse-4", day=date(2026, 11, 5))]
+
+    violations = check_schedule(shifts=shifts, requests=requests)
+    assert [(v.day, v.staff_id, v.rule) for v in violations] == [
+        (date(2026, 11, 2), "nurse-3", "heures_hebdomadaires"),
+        (date(2026, 11, 5), "nurse-4", "desiderata"),
+        (date(2026, 11, 6), "nurse-1", "repos_quotidien"),
+        (date(2026, 11, 6), "nurse-2", "nuits_consecutives"),
+    ]
