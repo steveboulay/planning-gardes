@@ -1,7 +1,12 @@
 from datetime import date, datetime, timedelta
 
 from planning_rules.models import RuleCategory, Shift, ShiftKind
-from planning_rules.rules import check_consecutive_nights, check_daily_rest, check_weekly_hours
+from planning_rules.rules import (
+    check_consecutive_nights,
+    check_daily_rest,
+    check_day_off_requests,
+    check_weekly_hours,
+)
 
 
 def make_shift(
@@ -366,3 +371,11 @@ def test_week_spanning_new_year_is_counted_as_one_week():
     assert violations[0].category == RuleCategory.LEGAL
     assert violations[0].staff_id == "nurse-1"
     assert violations[0].day == date(2026, 12, 28)
+
+
+def test_empty_schedule_has_no_day_off_request_violation():
+    violations = check_day_off_requests(
+        shifts=[],
+        requests=[],
+    )
+    assert violations == []
