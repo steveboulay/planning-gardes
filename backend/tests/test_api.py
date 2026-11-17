@@ -72,3 +72,17 @@ def test_unknown_shift_kind_is_rejected(api_client):
     assert response.json() == {
         "shifts": {"0": {"kind": ["«\xa0soir\xa0» n'est pas un choix valide."]}}
     }
+
+
+def test_shift_ending_before_its_start_is_rejected(api_client):
+    shift = shift_payload(
+        "nurse-1", datetime(2026, 11, 2, 20, 0), datetime(2026, 11, 2, 8, 0), "jour"
+    )
+
+    url = reverse("check-schedule")
+    response = api_client.post(url, {"shifts": [shift]}, format="json")
+
+    assert response.status_code == 400
+    assert response.json() == {
+        "shifts": {"0": {"non_field_errors": ["Un poste doit se terminer après son début."]}}
+    }
