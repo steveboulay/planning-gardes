@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from planning_rules.models import DayOffRequest, Shift, ShiftKind
+from planning_rules.models import DayOffRequest, RulesConfig, Shift, ShiftKind
 
 
 class ShiftSerializer(serializers.Serializer):
@@ -29,9 +29,19 @@ class DayOffRequestSerializer(serializers.Serializer):
         return DayOffRequest(**attrs)
 
 
+class RulesConfigSerializer(serializers.Serializer):
+    min_daily_rest = serializers.DurationField(required=False)
+    max_consecutive_nights = serializers.IntegerField(required=False)
+    max_weekly_duration = serializers.DurationField(required=False)
+
+    def validate(self, attrs):
+        return RulesConfig(**attrs)
+
+
 class CheckScheduleSerializer(serializers.Serializer):
     shifts = ShiftSerializer(many=True)
     day_off_requests = DayOffRequestSerializer(many=True, required=False, default=list)
+    config = RulesConfigSerializer(required=False)
 
 
 class ViolationSerializer(serializers.Serializer):
