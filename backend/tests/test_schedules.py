@@ -59,3 +59,10 @@ def test_stored_day_off_request_converts_to_engine_request(nurse):
         staff_id="nurse-1",
         day=date(2026, 11, 4),
     )
+
+
+def test_day_off_request_cannot_be_stored_twice(nurse):
+    DayOffRequest.objects.create(staff=nurse, day=date(2026, 11, 4))
+
+    with pytest.raises(IntegrityError):
+        DayOffRequest.objects.create(staff=nurse, day=date(2026, 11, 4))
