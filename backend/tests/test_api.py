@@ -14,3 +14,10 @@ def test_empty_schedule_returns_no_violation(api_client):
 
     assert response.status_code == 200
     assert response.json() == {"violations": []}
+
+
+def test_get_is_not_allowed(api_client):
+    url = reverse("check-schedule")
+    response = api_client.get(url)
+
+    assert response.status_code == 405
