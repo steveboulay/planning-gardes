@@ -31,7 +31,7 @@ class DayOffRequestSerializer(serializers.Serializer):
 
 class RulesConfigSerializer(serializers.Serializer):
     min_daily_rest = serializers.DurationField(required=False)
-    max_consecutive_nights = serializers.IntegerField(required=False)
+    max_consecutive_nights = serializers.IntegerField(required=False, min_value=1)
     max_weekly_duration = serializers.DurationField(required=False)
 
     def validate(self, attrs):
