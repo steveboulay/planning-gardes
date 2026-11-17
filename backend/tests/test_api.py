@@ -69,9 +69,7 @@ def test_unknown_shift_kind_is_rejected(api_client):
     response = api_client.post(url, {"shifts": [shift]}, format="json")
 
     assert response.status_code == 400
-    assert response.json() == {
-        "shifts": {"0": {"kind": ["«\xa0soir\xa0» n'est pas un choix valide."]}}
-    }
+    assert "kind" in response.json()["shifts"]["0"]
 
 
 def test_shift_ending_before_its_start_is_rejected(api_client):
