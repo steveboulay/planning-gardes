@@ -21,3 +21,11 @@ def test_get_is_not_allowed(api_client):
     response = api_client.get(url)
 
     assert response.status_code == 405
+
+
+def test_missing_shifts_is_rejected(api_client):
+    url = reverse("check-schedule")
+    response = api_client.post(url, {}, format="json")
+
+    assert response.status_code == 400
+    assert "shifts" in response.json()
