@@ -232,3 +232,18 @@ def test_partial_config_keeps_other_defaults(api_client):
     assert [violation["rule"] for violation in response.json()["violations"]] == [
         "nuits_consecutives"
     ]
+
+
+def test_invalid_config_is_rejected(api_client):
+    url = reverse("check-schedule")
+    response = api_client.post(
+        url,
+        {
+            "shifts": [],
+            "config": {"max_consecutive_nights": 0},
+        },
+        format="json",
+    )
+
+    assert response.status_code == 400
+    assert "max_consecutive_nights" in response.json()["config"]
