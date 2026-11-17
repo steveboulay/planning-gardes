@@ -10,12 +10,15 @@ class ShiftSerializer(serializers.Serializer):
     kind = serializers.ChoiceField(choices=[kind.value for kind in ShiftKind])
 
     def validate(self, attrs):
-        return Shift(
-            staff_id=attrs["staff_id"],
-            start=attrs["start"],
-            end=attrs["end"],
-            kind=ShiftKind(attrs["kind"]),
-        )
+        try:
+            return Shift(
+                staff_id=attrs["staff_id"],
+                start=attrs["start"],
+                end=attrs["end"],
+                kind=ShiftKind(attrs["kind"]),
+            )
+        except ValueError as error:
+            raise serializers.ValidationError(str(error)) from error
 
 
 class CheckScheduleSerializer(serializers.Serializer):
