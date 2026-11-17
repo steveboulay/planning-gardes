@@ -43,3 +43,8 @@ def test_stored_shift_converts_to_engine_shift(nurse):
 def test_shift_ending_before_its_start_cannot_be_stored(nurse):
     with pytest.raises(IntegrityError):
         store_shift(nurse, datetime(2026, 11, 2, 20, 0), hours=-12)
+
+
+def test_staff_code_cannot_be_stored_twice(nurse):
+    with pytest.raises(IntegrityError):
+        StaffMember.objects.create(code="nurse-1", full_name="André Martin")
