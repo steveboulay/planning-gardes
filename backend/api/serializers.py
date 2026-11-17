@@ -5,8 +5,8 @@ from planning_rules.models import DayOffRequest, RulesConfig, Shift, ShiftKind
 
 class ShiftSerializer(serializers.Serializer):
     staff_id = serializers.CharField()
-    start = serializers.DateTimeField()
-    end = serializers.DateTimeField()
+    start = serializers.DateTimeField(input_formats=["%Y-%m-%dT%H:%M:%S"])
+    end = serializers.DateTimeField(input_formats=["%Y-%m-%dT%H:%M:%S"])
     kind = serializers.ChoiceField(choices=[kind.value for kind in ShiftKind])
 
     def validate(self, attrs):
