@@ -59,3 +59,16 @@ def test_daily_rest_violation_is_returned_as_json(api_client):
             }
         ]
     }
+
+
+def test_unknown_shift_kind_is_rejected(api_client):
+    shift = shift_payload(
+        "nurse-1", datetime(2026, 11, 2, 8, 0), datetime(2026, 11, 2, 20, 0), "soir"
+    )
+    url = reverse("check-schedule")
+    response = api_client.post(url, {"shifts": [shift]}, format="json")
+
+    assert response.status_code == 400
+    assert response.json() == {
+        "shifts": {"0": {"kind": ["«\xa0soir\xa0» n'est pas un choix valide."]}}
+    }
