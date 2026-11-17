@@ -33,3 +33,18 @@ class Shift(models.Model):
             end=self.end,
             kind=engine.ShiftKind(self.kind),
         )
+
+
+class DayOffRequest(models.Model):
+    staff = models.ForeignKey(
+        StaffMember, on_delete=models.CASCADE, related_name="day_off_requests"
+    )
+    day = models.DateField()
+
+    def to_engine(self) -> engine.DayOffRequest:
+        """Convertit la demande de repos enregistré en une demande de repos du moteur de règles."""
+
+        return engine.DayOffRequest(
+            staff_id=self.staff.code,
+            day=self.day,
+        )
