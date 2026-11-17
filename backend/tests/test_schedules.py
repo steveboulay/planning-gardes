@@ -1,9 +1,9 @@
 from datetime import datetime, timedelta
 
 import pytest
-from schedules.models import Shift, StaffMember
 
 from planning_rules import models as engine
+from schedules.models import Shift, StaffMember
 
 pytestmark = pytest.mark.django_db
 
