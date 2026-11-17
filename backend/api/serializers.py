@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from rest_framework import serializers
 
 from planning_rules.models import DayOffRequest, RulesConfig, Shift, ShiftKind
@@ -30,9 +32,9 @@ class DayOffRequestSerializer(serializers.Serializer):
 
 
 class RulesConfigSerializer(serializers.Serializer):
-    min_daily_rest = serializers.DurationField(required=False)
+    min_daily_rest = serializers.DurationField(required=False, min_value=timedelta(0))
     max_consecutive_nights = serializers.IntegerField(required=False, min_value=1)
-    max_weekly_duration = serializers.DurationField(required=False)
+    max_weekly_duration = serializers.DurationField(required=False, min_value=timedelta(0))
 
     def validate(self, attrs):
         return RulesConfig(**attrs)
