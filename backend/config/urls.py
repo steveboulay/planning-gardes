@@ -15,4 +15,10 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 
-urlpatterns = []
+from django.urls import path
+
+from api.views import CheckScheduleView
+
+urlpatterns = [
+    path("api/schedule/check/", CheckScheduleView.as_view(), name="check-schedule"),
+]
