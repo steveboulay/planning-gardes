@@ -41,8 +41,13 @@ class DayOffRequest(models.Model):
     )
     day = models.DateField()
 
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["staff", "day"], name="unique_day_off_request"),
+        ]
+
     def to_engine(self) -> engine.DayOffRequest:
-        """Convertit la demande de repos enregistré en une demande de repos du moteur de règles."""
+        """Convertit la demande de repos enregistrée en une demande de repos du moteur de règles."""
 
         return engine.DayOffRequest(
             staff_id=self.staff.code,
