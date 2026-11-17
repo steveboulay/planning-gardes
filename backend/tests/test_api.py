@@ -11,13 +11,13 @@ def api_client():
 
 
 def shift_payload(staff_id: str, start: datetime, end: datetime, kind: str):
-    """Retourne un Shift au format JSON"""
+    """Retourne un Shift au format JSON."""
 
     return {"staff_id": staff_id, "start": start.isoformat(), "end": end.isoformat(), "kind": kind}
 
 
-def day_off_payload(staff_id: str, day: datetime):
-    """Retourne un DayOffRequest au format JSON"""
+def day_off_payload(staff_id: str, day: date):
+    """Retourne un DayOffRequest au format JSON."""
 
     return {"staff_id": staff_id, "day": day.isoformat()}
 
@@ -107,3 +107,84 @@ def test_day_off_requests_are_used(api_client):
 
     assert response.status_code == 200
     assert [violation["rule"] for violation in response.json()["violations"]] == ["desiderata"]
+
+
+def test_given_config_is_used(api_client):
+    shifts = [
+        shift_payload("nurse-1", datetime(2026, 11, 2, 8, 0), datetime(2026, 11, 2, 20, 0), "jour"),
+        shift_payload("nurse-1", datetime(2026, 11, 3, 7, 0), datetime(2026, 11, 3, 19, 0), "jour"),
+    ]
+    shifts += [
+        shift_payload(
+            staff_id="nurse-2",
+            start=datetime(2026, 11, 3, 20, 0),
+            end=datetime(2026, 11, 4, 8, 0),
+            kind="nuit",
+        ),
+        shift_payload(
+            staff_id="nurse-2",
+            start=datetime(2026, 11, 4, 20, 0),
+            end=datetime(2026, 11, 5, 8, 0),
+            kind="nuit",
+        ),
+        shift_payload(
+            staff_id="nurse-2",
+            start=datetime(2026, 11, 5, 20, 0),
+            end=datetime(2026, 11, 6, 8, 0),
+            kind="nuit",
+        ),
+        shift_payload(
+            staff_id="nurse-2",
+            start=datetime(2026, 11, 6, 20, 0),
+            end=datetime(2026, 11, 7, 8, 0),
+            kind="nuit",
+        ),
+    ]
+    shifts += [
+        shift_payload(
+            staff_id="nurse-3",
+            start=datetime(2026, 11, 3, 8, 0),
+            end=datetime(2026, 11, 3, 20, 0),
+            kind="jour",
+        ),
+        shift_payload(
+            staff_id="nurse-3",
+            start=datetime(2026, 11, 4, 8, 0),
+            end=datetime(2026, 11, 4, 20, 0),
+            kind="jour",
+        ),
+        shift_payload(
+            staff_id="nurse-3",
+            start=datetime(2026, 11, 5, 8, 0),
+            end=datetime(2026, 11, 5, 20, 0),
+            kind="jour",
+        ),
+        shift_payload(
+            staff_id="nurse-3",
+            start=datetime(2026, 11, 6, 8, 0),
+            end=datetime(2026, 11, 6, 20, 0),
+            kind="jour",
+        ),
+        shift_payload(
+            staff_id="nurse-3",
+            start=datetime(2026, 11, 7, 8, 0),
+            end=datetime(2026, 11, 7, 20, 0),
+            kind="jour",
+        ),
+    ]
+    url = reverse("check-schedule")
+    response = api_client.post(
+        url,
+        {
+            "shifts": shifts,
+            "config": {
+                "min_daily_rest": "11:00:00",
+                "max_weekly_duration": "60:00:00",
+                "max_consecutive_nights": 4,
+            },
+        },
+        format="json",
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {"violations": []}
