@@ -1,0 +1,39 @@
+from datetime import datetime, timedelta
+
+import pytest
+from schedules.models import Shift, StaffMember
+
+from planning_rules import models as engine
+
+pytestmark = pytest.mark.django_db
+
+
+@pytest.fixture
+def nurse():
+    """Soignant nurse-1, enregistré en base."""
+
+    return StaffMember.objects.create(code="nurse-1", full_name="Alice Martin")
+
+
+def store_shift(staff, start, hours=12, kind="jour"):
+    """Enregistre un poste en base et le retourne.
+
+    Un poste par défaut est un poste de jour de 12 heures.
+    """
+
+    return Shift.objects.create(
+        staff=staff, start=start, end=start + timedelta(hours=hours), kind=kind
+    )
+
+
+def test_stored_shift_converts_to_engine_shift(nurse):
+    shift = store_shift(nurse, datetime(2026, 11, 2, 20, 0), kind="nuit")
+
+    stored = Shift.objects.get(pk=shift.pk)
+
+    assert stored.to_engine() == engine.Shift(
+        staff_id="nurse-1",
+        start=datetime(2026, 11, 2, 20, 0),
+        end=datetime(2026, 11, 3, 8, 0),
+        kind=engine.ShiftKind.NIGHT,
+    )
