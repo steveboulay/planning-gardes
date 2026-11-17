@@ -1,10 +1,10 @@
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 
 import pytest
 from django.db import IntegrityError
 
 from planning_rules import models as engine
-from schedules.models import Shift, StaffMember
+from schedules.models import DayOffRequest, Shift, StaffMember
 
 pytestmark = pytest.mark.django_db
 
@@ -48,3 +48,14 @@ def test_shift_ending_before_its_start_cannot_be_stored(nurse):
 def test_staff_code_cannot_be_stored_twice(nurse):
     with pytest.raises(IntegrityError):
         StaffMember.objects.create(code="nurse-1", full_name="André Martin")
+
+
+def test_stored_day_off_request_converts_to_engine_request(nurse):
+    day_off_request = DayOffRequest.objects.create(staff=nurse, day=date(2026, 11, 4))
+
+    stored = DayOffRequest.objects.get(pk=day_off_request.pk)
+
+    assert stored.to_engine() == engine.DayOffRequest(
+        staff_id="nurse-1",
+        day=date(2026, 11, 4),
+    )
