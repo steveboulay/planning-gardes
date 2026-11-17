@@ -20,5 +20,6 @@ backend:
     - uv sync --locked
     - uv run ruff check .
     - uv run ruff format --check .
+    - uv run python manage.py check
     - uv run pytest
     - uv cache prune --ci
