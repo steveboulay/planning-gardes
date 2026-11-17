@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from planning_rules.models import Shift, ShiftKind
+from planning_rules.models import DayOffRequest, Shift, ShiftKind
 
 
 class ShiftSerializer(serializers.Serializer):
@@ -21,8 +21,17 @@ class ShiftSerializer(serializers.Serializer):
             raise serializers.ValidationError(str(error)) from error
 
 
+class DayOffRequestSerializer(serializers.Serializer):
+    staff_id = serializers.CharField()
+    day = serializers.DateField()
+
+    def validate(self, attrs):
+        return DayOffRequest(**attrs)
+
+
 class CheckScheduleSerializer(serializers.Serializer):
     shifts = ShiftSerializer(many=True)
+    day_off_requests = DayOffRequestSerializer(many=True, required=False, default=list)
 
 
 class ViolationSerializer(serializers.Serializer):

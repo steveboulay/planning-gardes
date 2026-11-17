@@ -9,5 +9,8 @@ class CheckScheduleView(APIView):
     def post(self, request):
         serializer = CheckScheduleSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        violations = check_schedule(shifts=serializer.validated_data["shifts"])
+        violations = check_schedule(
+            shifts=serializer.validated_data["shifts"],
+            requests=serializer.validated_data["day_off_requests"],
+        )
         return Response({"violations": ViolationSerializer(violations, many=True).data})
