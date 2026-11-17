@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 
 import pytest
 from django.urls import reverse
@@ -11,7 +11,15 @@ def api_client():
 
 
 def shift_payload(staff_id: str, start: datetime, end: datetime, kind: str):
+    """Retourne un Shift au format JSON"""
+
     return {"staff_id": staff_id, "start": start.isoformat(), "end": end.isoformat(), "kind": kind}
+
+
+def day_off_payload(staff_id: str, day: datetime):
+    """Retourne un DayOffRequest au format JSON"""
+
+    return {"staff_id": staff_id, "day": day.isoformat()}
 
 
 def test_empty_schedule_returns_no_violation(api_client):
@@ -84,3 +92,18 @@ def test_shift_ending_before_its_start_is_rejected(api_client):
     assert response.json() == {
         "shifts": {"0": {"non_field_errors": ["Un poste doit se terminer après son début."]}}
     }
+
+
+def test_day_off_requests_are_used(api_client):
+    shift = shift_payload(
+        "nurse-1", datetime(2026, 11, 4, 8, 0), datetime(2026, 11, 4, 20, 0), "jour"
+    )
+    day_off = day_off_payload("nurse-1", date(2026, 11, 4))
+
+    url = reverse("check-schedule")
+    response = api_client.post(
+        url, {"shifts": [shift], "day_off_requests": [day_off]}, format="json"
+    )
+
+    assert response.status_code == 200
+    assert [violation["rule"] for violation in response.json()["violations"]] == ["desiderata"]
