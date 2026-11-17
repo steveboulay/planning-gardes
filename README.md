@@ -58,6 +58,63 @@ for violation in check_schedule(shifts):
 2026-11-03 légale Soignant nurse-1 : repos de 11:00 inférieur à 12:00.
 ```
 
+## L'API
+
+Une API Django REST Framework expose le moteur : elle reçoit un planning en JSON et renvoie ses infractions. Elle n'a pas encore de base de données et ne conserve rien. Le code est réparti en trois dossiers de `backend/` : `planning_rules/` pour le moteur, `api/` pour les serializers et la vue, `config/` pour les réglages de Django.
+
+Depuis `backend/`, lancer le serveur de développement :
+
+```bash
+uv run python manage.py runserver
+```
+
+Au démarrage, Django signale des migrations non appliquées : c'est sans effet, puisqu'aucune base n'est utilisée.
+
+Puis, dans un autre terminal :
+
+```bash
+curl -X POST http://127.0.0.1:8000/api/schedule/check/ \
+  -H "Content-Type: application/json" \
+  -d '{
+    "shifts": [
+      {"staff_id": "nurse-1", "start": "2026-11-02T08:00:00", "end": "2026-11-02T20:00:00", "kind": "jour"},
+      {"staff_id": "nurse-1", "start": "2026-11-03T07:00:00", "end": "2026-11-03T19:00:00", "kind": "jour"}
+    ],
+    "day_off_requests": [{"staff_id": "nurse-1", "day": "2026-11-03"}],
+    "config": {"min_daily_rest": "12:00:00"}
+  }'
+```
+
+```json
+{
+  "violations": [
+    {
+      "rule": "desiderata",
+      "category": "individuelle",
+      "staff_id": "nurse-1",
+      "day": "2026-11-03",
+      "message": "Soignant nurse-1 : poste le 03/11/2026, jour de repos demandé."
+    },
+    {
+      "rule": "repos_quotidien",
+      "category": "légale",
+      "staff_id": "nurse-1",
+      "day": "2026-11-03",
+      "message": "Soignant nurse-1 : repos de 11:00 inférieur à 12:00."
+    }
+  ]
+}
+```
+
+Format de la requête :
+
+- `shifts` est obligatoire, éventuellement vide ; `day_off_requests` et `config` sont facultatifs.
+- Les dates et heures sont au format `AAAA-MM-JJTHH:MM:SS`, sans fuseau horaire (`2026-11-02T08:00:00`) : une heure suivie d'un décalage (`+01:00`) ou de `Z` est refusée, comme une heure sans secondes. Les jours sont au format `2026-11-03`.
+- `kind` vaut `"jour"` ou `"nuit"`.
+- Dans `config`, `min_daily_rest` et `max_weekly_duration` sont des durées positives ou nulles au format `HH:MM:SS` (`"48:00:00"` est accepté), et `max_consecutive_nights` un entier au moins égal à 1. Un seuil absent garde sa valeur par défaut.
+
+Erreurs : un code 400 avec le détail des champs en faute, par exemple `{"shifts": {"0": {"non_field_errors": ["Un poste doit se terminer après son début."]}}}` pour un poste qui finit avant de commencer, et un code 405 pour toute autre méthode que POST.
+
 ## Lancer les tests
 
 Il faut [uv](https://docs.astral.sh/uv/), qui installe Python 3.13 si besoin.
@@ -68,6 +125,7 @@ uv sync
 uv run pytest
 uv run ruff check .
 uv run ruff format --check .
+uv run python manage.py check
 ```
 
 La CI GitLab lance les mêmes commandes à chaque push.
@@ -79,6 +137,7 @@ La CI GitLab lance les mêmes commandes à chaque push.
 - Deux postes qui se chevauchent apparaissent comme un repos négatif, sans règle dédiée.
 - Une demande de repos saisie deux fois donne deux infractions.
 - Une nuit qui commence la veille d'un jour de repos demandé et se termine ce jour-là n'est pas une infraction : la règle porte sur le jour où le poste commence.
+- L'API n'a pas d'authentification : c'est une API de démonstration, sans état.
 
 ## Usage de l'IA
 
@@ -86,10 +145,9 @@ Le projet est développé avec l'aide de Claude (Anthropic) : découpage des ét
 
 ## Suite
 
-1. Une API Django REST Framework qui reçoit un planning en JSON et renvoie les infractions.
-2. La persistance : modèles Django, PostgreSQL avec Docker Compose, migrations.
-3. Un front React et TypeScript : la grille de la semaine, avec les infractions mises en évidence.
-4. Des scénarios de bout en bout avec Playwright.
+1. La persistance : modèles Django, PostgreSQL avec Docker Compose, migrations.
+2. Un front React et TypeScript : la grille de la semaine, avec les infractions mises en évidence.
+3. Des scénarios de bout en bout avec Playwright.
 
 ## Licence
 
