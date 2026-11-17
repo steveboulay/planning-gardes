@@ -188,3 +188,47 @@ def test_given_config_is_used(api_client):
 
     assert response.status_code == 200
     assert response.json() == {"violations": []}
+
+
+def test_partial_config_keeps_other_defaults(api_client):
+    shifts = [
+        shift_payload(
+            staff_id="nurse-2",
+            start=datetime(2026, 11, 3, 20, 0),
+            end=datetime(2026, 11, 4, 8, 0),
+            kind="nuit",
+        ),
+        shift_payload(
+            staff_id="nurse-2",
+            start=datetime(2026, 11, 4, 20, 0),
+            end=datetime(2026, 11, 5, 8, 0),
+            kind="nuit",
+        ),
+        shift_payload(
+            staff_id="nurse-2",
+            start=datetime(2026, 11, 5, 20, 0),
+            end=datetime(2026, 11, 6, 8, 0),
+            kind="nuit",
+        ),
+        shift_payload(
+            staff_id="nurse-2",
+            start=datetime(2026, 11, 6, 20, 0),
+            end=datetime(2026, 11, 7, 8, 0),
+            kind="nuit",
+        ),
+    ]
+
+    url = reverse("check-schedule")
+    response = api_client.post(
+        url,
+        {
+            "shifts": shifts,
+            "config": {"min_daily_rest": "11:00:00"},
+        },
+        format="json",
+    )
+
+    assert response.status_code == 200
+    assert [violation["rule"] for violation in response.json()["violations"]] == [
+        "nuits_consecutives"
+    ]
