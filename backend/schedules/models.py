@@ -16,6 +16,14 @@ class Shift(models.Model):
         max_length=4, choices=[(kind.value, kind.value) for kind in engine.ShiftKind]
     )
 
+    class Meta:
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(end__gt=models.F("start")),
+                name="shift_ends_after_start",
+            ),
+        ]
+
     def to_engine(self) -> engine.Shift:
         """Convertit le poste enregistré en poste du moteur de règles."""
 
