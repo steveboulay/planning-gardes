@@ -4,7 +4,7 @@ from planning_rules import models as engine
 
 
 class StaffMember(models.Model):
-    code = models.CharField(max_length=50)
+    code = models.CharField(max_length=50, unique=True)
     full_name = models.CharField(max_length=200)
 
 
