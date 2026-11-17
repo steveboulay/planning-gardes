@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 
 import pytest
+from django.db import IntegrityError
 
 from planning_rules import models as engine
 from schedules.models import Shift, StaffMember
@@ -37,3 +38,8 @@ def test_stored_shift_converts_to_engine_shift(nurse):
         end=datetime(2026, 11, 3, 8, 0),
         kind=engine.ShiftKind.NIGHT,
     )
+
+
+def test_shift_ending_before_its_start_cannot_be_stored(nurse):
+    with pytest.raises(IntegrityError):
+        store_shift(nurse, datetime(2026, 11, 2, 20, 0), hours=-12)
