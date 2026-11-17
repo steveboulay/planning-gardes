@@ -263,3 +263,22 @@ def test_shift_with_time_zone_is_rejected(api_client):
     assert response.status_code == 400
     assert "start" in response.json()["shifts"]["0"]
     assert "end" in response.json()["shifts"]["0"]
+
+
+def test_negative_duration_config_is_rejected(api_client):
+    url = reverse("check-schedule")
+    response = api_client.post(
+        url,
+        {
+            "shifts": [],
+            "config": {
+                "min_daily_rest": "-11:00:00",
+                "max_weekly_duration": "-60:00:00",
+            },
+        },
+        format="json",
+    )
+
+    assert response.status_code == 400
+    assert "min_daily_rest" in response.json()["config"]
+    assert "max_weekly_duration" in response.json()["config"]
