@@ -108,10 +108,11 @@ Ce projet est développé avec l'aide de Claude (Anthropic). J'écris le code et
   - VS Code ajoutait des imports `from backend.…`, qui échouent depuis `backend/` : corrigés deux fois, puis réglés par `python.analysis.extraPaths`.
   - La vérification `manage.py check` avait été placée après `uv cache prune` dans la CI : corrigée avec `git commit --amend` et `git push --force-with-lease`, sur ma branche.
   - `test_invalid_config_is_rejected` envoyait la chaîne `"0"` au lieu de l'entier `0` : corrigé dans le commit du test lui-même, avec `git commit --fixup` et `git rebase --autosquash`.
-- **Vérifié par :** ruff, `manage.py check` et pytest en local, le pipeline de la merge request à chaque push, la réintroduction de l'erreur visée par chaque test, et l'exemple `curl` du README rejoué sur `runserver`.
-- **Bilan :** une route, une vue et cinq serializers, couverts par dix tests d'API ; 51 tests en tout. Le moteur n'a pas changé : l'API ne fait que l'appeler.
+  - La revue finale de la merge request, faite en envoyant à l'API des requêtes absentes des tests, a trouvé deux entrées acceptées à tort : une heure avec décalage, convertie en UTC sans prévenir (un poste commençant le 2 novembre à 0 h 30 passait au 1er novembre et échappait à une demande de repos), et des durées négatives dans `config`, qui empêchaient les règles de se déclencher. Deux tests et deux corrections ont suivi.
+- **Vérifié par :** ruff, `manage.py check` et pytest en local, le pipeline de la merge request à chaque push, la réintroduction de l'erreur visée par chaque test, l'exemple `curl` du README rejoué sur `runserver`, et des requêtes envoyées à la main pendant la revue finale.
+- **Bilan :** une route, une vue et cinq serializers, couverts par douze tests d'API ; 53 tests en tout. Le moteur n'a pas changé : l'API ne fait que l'appeler.
   - Ce qui a bien marché : le test d'abord, cette fois sans exception, chaque commit de code suivant le test qui l'a demandé ; une vue mince, qui laisse les règles au moteur : le contrôle « un poste finit après son début » reste écrit à un seul endroit, dans `Shift`, et l'API renvoie son message.
-  - Ce qui a moins bien marché : des commandes lancées depuis la racine du dépôt au lieu de `backend/` (`ModuleNotFoundError`, `manage.py` introuvable) ; une assertion qui dépendait du texte exact d'un message de DRF.
+  - Ce qui a moins bien marché : des commandes lancées depuis la racine du dépôt au lieu de `backend/` (`ModuleNotFoundError`, `manage.py` introuvable) ; une assertion qui dépendait du texte exact d'un message de DRF ; un push dans le désordre, le code avant son test, remis en ordre avec `git reset` et `git restore --source` ; un push rouge, faute d'avoir lancé pytest en local avant.
 - **Appris :**
   - `startproject config .` : le point final place `manage.py` directement dans le dossier courant.
   - `INSTALLED_APPS` joue le rôle de `config/bundles.php`.
@@ -129,6 +130,9 @@ Ce projet est développé avec l'aide de Claude (Anthropic). J'écris le code et
   - Les messages de DRF en français contiennent des espaces insécables : vérifier le nom du champ en faute est plus solide que comparer le texte.
   - `git commit --fixup` et `git rebase -i --autosquash` corrigent un commit plus ancien que le dernier ; `--force-with-lease` ne sert que sur ma propre branche, jamais sur `main`.
   - `git push -o merge_request.create` crée la merge request depuis le terminal.
+  - Le sixième argument de position de `datetime` est la seconde : `tzinfo` se passe par son nom.
+  - `git reset <commit>` sans option déplace la branche et garde les fichiers tels quels ; `git restore --source=<commit>` reprend un fichier depuis un autre commit.
+  - Une seule requête peut vérifier plusieurs champs, puisque DRF renvoie toutes les erreurs à la fois ; `pytest.mark.parametrize`, l'équivalent des data providers de PHPUnit, sert quand les cas ne tiennent pas dans une requête.
   - Le formatage et les corrections de ruff à l'enregistrement dans VS Code (`formatOnSave`, `codeActionsOnSave`), comme PHP CS Fixer lancé à chaque sauvegarde.
 
 ### Tests
@@ -138,8 +142,10 @@ Ce projet est développé avec l'aide de Claude (Anthropic). J'écris le code et
 - `test_missing_shifts_is_rejected`, requête sans `shifts` : a fait naître `CheckScheduleSerializer`. Vérifié en rendant `shifts` facultatif : il échoue.
 - `test_daily_rest_violation_is_returned_as_json`, deux postes séparés de 11 heures : comparaison du JSON complet de la réponse. A fait naître `ShiftSerializer`, `ViolationSerializer` et la fonction `shift_payload`. Vérifié en renvoyant l'enum au lieu de sa valeur (`source="category"`) : il échoue.
 - `test_unknown_shift_kind_is_rejected`, type de poste « soir » : vert dès le premier lancement, grâce au `ChoiceField` déjà en place. L'assertion comparait d'abord le message exact de DRF, avec ses espaces insécables ; elle vérifie maintenant que l'erreur porte sur le champ `kind`. Vérifié en remplaçant le `ChoiceField` par un `CharField` : il échoue, car l'erreur vient alors du modèle et non plus du champ.
-- `test_shift_ending_before_its_start_is_rejected`, poste qui finit avant de commencer : la `ValueError` du modèle remontait en erreur 500. A fait naître le `try`/`except` de `ShiftSerializer`, qui la transforme en erreur 400 avec le message du modèle.
+- `test_shift_ending_before_its_start_is_rejected`, poste qui finit avant de commencer : la `ValueError` du modèle n'était pas interceptée, et le test échouait sur l'exception, qui aurait donné une erreur 500 en production. A fait naître le `try`/`except` de `ShiftSerializer`, qui la transforme en erreur 400 avec le message du modèle.
 - `test_day_off_requests_are_used`, poste un jour de repos demandé : a fait naître `DayOffRequestSerializer` et la fonction `day_off_payload`. Vérifié en ne transmettant plus les demandes au moteur : il échoue.
 - `test_given_config_is_used`, un soignant par seuil, chacun exactement à la limite de la configuration reçue : a fait naître `RulesConfigSerializer`. Vérifié en remplaçant la configuration reçue par `DEFAULT_CONFIG`, puis chaque seuil un par un : il échoue à chaque fois.
 - `test_partial_config_keeps_other_defaults`, seul le repos quotidien est fourni et quatre nuits consécutives donnent toujours une infraction : vert dès le premier lancement. Vérifié en donnant une valeur par défaut de 99 nuits au champ du serializer : il échoue.
 - `test_invalid_config_is_rejected`, zéro nuit consécutive autorisée : a fait naître `min_value=1`. Vérifié en retirant `min_value` : il échoue.
+- `test_shift_with_time_zone_is_rejected`, poste dont les heures portent `+01:00` : ajouté après la revue finale. A fait naître `input_formats` sur `start` et `end`. Il ne vérifiait d'abord que `start` : la revue a montré qu'en retirant `input_formats` de `end`, il passait toujours. D'où une seconde assertion. Vérifié en retirant `input_formats` de chaque champ : il échoue.
+- `test_negative_duration_config_is_rejected`, repos minimum et durée hebdomadaire négatifs : ajouté après la revue finale. Les deux champs sont envoyés dans la même requête, et le test vérifie que chacun reçoit son erreur. A fait naître `min_value=timedelta(0)` sur les deux `DurationField`. Vérifié en retirant `min_value` d'un champ, puis de l'autre : il échoue à chaque fois.

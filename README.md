@@ -109,9 +109,9 @@ curl -X POST http://127.0.0.1:8000/api/schedule/check/ \
 Format de la requête :
 
 - `shifts` est obligatoire, éventuellement vide ; `day_off_requests` et `config` sont facultatifs.
-- Les dates et heures sont au format ISO 8601, sans fuseau horaire (`2026-11-02T08:00:00`), et les jours au format `2026-11-03`.
+- Les dates et heures sont au format `AAAA-MM-JJTHH:MM:SS`, sans fuseau horaire (`2026-11-02T08:00:00`) : une heure suivie d'un décalage (`+01:00`) ou de `Z` est refusée, comme une heure sans secondes. Les jours sont au format `2026-11-03`.
 - `kind` vaut `"jour"` ou `"nuit"`.
-- Dans `config`, `min_daily_rest` et `max_weekly_duration` sont des durées au format `HH:MM:SS` (`"48:00:00"` est accepté), et `max_consecutive_nights` un entier au moins égal à 1. Un seuil absent garde sa valeur par défaut.
+- Dans `config`, `min_daily_rest` et `max_weekly_duration` sont des durées positives ou nulles au format `HH:MM:SS` (`"48:00:00"` est accepté), et `max_consecutive_nights` un entier au moins égal à 1. Un seuil absent garde sa valeur par défaut.
 
 Erreurs : un code 400 avec le détail des champs en faute, par exemple `{"shifts": {"0": {"non_field_errors": ["Un poste doit se terminer après son début."]}}}` pour un poste qui finit avant de commencer, et un code 405 pour toute autre méthode que POST.
 
@@ -137,7 +137,7 @@ La CI GitLab lance les mêmes commandes à chaque push.
 - Deux postes qui se chevauchent apparaissent comme un repos négatif, sans règle dédiée.
 - Une demande de repos saisie deux fois donne deux infractions.
 - Une nuit qui commence la veille d'un jour de repos demandé et se termine ce jour-là n'est pas une infraction : la règle porte sur le jour où le poste commence.
-- L'API n'a pas d’authentification : c'est une API de démonstration, sans état.
+- L'API n'a pas d'authentification : c'est une API de démonstration, sans état.
 
 ## Usage de l'IA
 
