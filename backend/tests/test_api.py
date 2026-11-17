@@ -1,4 +1,4 @@
-from datetime import date, datetime
+from datetime import date, datetime, timedelta, timezone
 
 import pytest
 from django.urls import reverse
@@ -247,3 +247,17 @@ def test_invalid_config_is_rejected(api_client):
 
     assert response.status_code == 400
     assert "max_consecutive_nights" in response.json()["config"]
+
+
+def test_shift_with_time_zone_is_rejected(api_client):
+    shift = shift_payload(
+        "nurse-1",
+        datetime(2026, 11, 2, 0, 30, tzinfo=timezone(timedelta(hours=1))),
+        datetime(2026, 11, 3, 12, 30, tzinfo=timezone(timedelta(hours=1))),
+        "nuit",
+    )
+    url = reverse("check-schedule")
+    response = api_client.post(url, {"shifts": [shift]}, format="json")
+
+    assert response.status_code == 400
+    assert "start" in response.json()["shifts"]["0"]
