@@ -9,13 +9,6 @@ from schedules.models import DayOffRequest, Shift, StaffMember
 pytestmark = pytest.mark.django_db
 
 
-@pytest.fixture
-def nurse():
-    """Soignant nurse-1, enregistré en base."""
-
-    return StaffMember.objects.create(code="nurse-1", full_name="Alice Martin")
-
-
 def store_shift(staff, start, hours=12, kind="jour"):
     """Enregistre un poste en base et le retourne.
 
