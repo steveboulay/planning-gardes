@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import date, timedelta
 
 from rest_framework import serializers
 
@@ -65,6 +65,16 @@ class StaffMemberSerializer(serializers.ModelSerializer):
 class PeriodSerializer(serializers.Serializer):
     start = serializers.DateField()
     end = serializers.DateField()
+
+    def validate(self, attrs: dict[str, date]) -> dict[str, date]:
+        """Refuse une période qui finit avant de commencer.
+
+        Une période d'un seul jour, dont le début et la fin sont égaux, reste valable.
+        """
+
+        if attrs["end"] < attrs["start"]:
+            raise serializers.ValidationError("La période doit se terminer après son début.")
+        return attrs
 
 
 class StoredShiftSerializer(serializers.ModelSerializer):
