@@ -124,3 +124,16 @@ def test_violations_ignore_shifts_outside_the_period(api_client, nurse):
 
     assert response.status_code == 200
     assert response.json() == {"violations": []}
+
+
+def test_violations_are_computed_with_two_queries(api_client, nurse, django_assert_num_queries):
+    other_nurse = StaffMember.objects.create(code="nurse-2", full_name="Bruno Petit")
+    for staff in (nurse, other_nurse):
+        store_shift(staff=staff, start=datetime(2026, 11, 2, 8, 0))
+        store_shift(staff=staff, start=datetime(2026, 11, 3, 8, 0))
+        DayOffRequest.objects.create(staff=staff, day=date(2026, 11, 4))
+
+    url = reverse("stored-violations")
+
+    with django_assert_num_queries(2):
+        api_client.get(url, {"start": "2026-11-02", "end": "2026-11-08"})
