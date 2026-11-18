@@ -74,3 +74,10 @@ def test_period_is_required(api_client):
     assert response.status_code == 400
     assert "start" in response.json()
     assert "end" in response.json()
+
+
+def test_period_ending_before_its_start_is_rejected(api_client):
+    response = api_client.get(reverse("shift-list"), {"start": "2026-11-08", "end": "2026-11-02"})
+
+    assert response.status_code == 400
+    assert response.json() == {"non_field_errors": ["La période doit se terminer après son début."]}
