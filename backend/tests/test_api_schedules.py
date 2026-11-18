@@ -112,3 +112,15 @@ def test_stored_day_off_requests_are_used(api_client, nurse):
 
     assert response.status_code == 200
     assert [violation["rule"] for violation in response.json()["violations"]] == ["desiderata"]
+
+
+def test_violations_ignore_shifts_outside_the_period(api_client, nurse):
+    store_shift(staff=nurse, start=datetime(2026, 11, 8, 8, 0))
+    store_shift(staff=nurse, start=datetime(2026, 11, 9, 7, 0))
+
+    response = api_client.get(
+        reverse("stored-violations"), {"start": "2026-11-02", "end": "2026-11-08"}
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {"violations": []}
