@@ -1,7 +1,9 @@
+from datetime import datetime
+
 import pytest
 from django.urls import reverse
 
-from schedules.models import StaffMember
+from schedules.models import Shift, StaffMember
 
 pytestmark = pytest.mark.django_db
 
@@ -16,4 +18,51 @@ def test_staff_members_are_listed(api_client):
     assert response.json() == [
         {"code": "nurse-1", "full_name": "Alice Martin"},
         {"code": "nurse-2", "full_name": "Bruno Petit"},
+    ]
+
+
+def test_shifts_of_the_period_are_listed(api_client, nurse):
+    Shift.objects.create(
+        staff=nurse,
+        start=datetime(2026, 11, 1, 8, 0),
+        end=datetime(2026, 11, 1, 20, 0),
+        kind="jour",
+    )
+    sunday_night = Shift.objects.create(
+        staff=nurse,
+        start=datetime(2026, 11, 8, 20, 0),
+        end=datetime(2026, 11, 9, 8, 0),
+        kind="nuit",
+    )
+    monday = Shift.objects.create(
+        staff=nurse,
+        start=datetime(2026, 11, 2, 8, 0),
+        end=datetime(2026, 11, 2, 20, 0),
+        kind="jour",
+    )
+    Shift.objects.create(
+        staff=nurse,
+        start=datetime(2026, 11, 9, 20, 0),
+        end=datetime(2026, 11, 10, 8, 0),
+        kind="nuit",
+    )
+
+    response = api_client.get(reverse("shift-list"), {"start": "2026-11-02", "end": "2026-11-08"})
+
+    assert response.status_code == 200
+    assert response.json() == [
+        {
+            "id": monday.pk,
+            "staff": "nurse-1",
+            "start": "2026-11-02T08:00:00",
+            "end": "2026-11-02T20:00:00",
+            "kind": "jour",
+        },
+        {
+            "id": sunday_night.pk,
+            "staff": "nurse-1",
+            "start": "2026-11-08T20:00:00",
+            "end": "2026-11-09T08:00:00",
+            "kind": "nuit",
+        },
     ]
