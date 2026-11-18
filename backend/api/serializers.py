@@ -1,4 +1,5 @@
 from datetime import date, timedelta
+from typing import Any
 
 from rest_framework import serializers
 
@@ -13,7 +14,13 @@ class ShiftSerializer(serializers.Serializer):
     end = serializers.DateTimeField(input_formats=["%Y-%m-%dT%H:%M:%S"])
     kind = serializers.ChoiceField(choices=[kind.value for kind in ShiftKind])
 
-    def validate(self, attrs):
+    def validate(self, attrs: dict[str, Any]) -> Shift:
+        """Construit le poste du moteur à partir des champs validés.
+
+        La règle « un poste finit après son début » reste écrite dans `Shift` : sa `ValueError`
+        devient ici une erreur de validation.
+        """
+
         try:
             return Shift(
                 staff_id=attrs["staff_id"],
@@ -29,7 +36,9 @@ class DayOffRequestSerializer(serializers.Serializer):
     staff_id = serializers.CharField()
     day = serializers.DateField()
 
-    def validate(self, attrs):
+    def validate(self, attrs: dict[str, Any]) -> DayOffRequest:
+        """Construit la demande de repos du moteur à partir des champs validés."""
+
         return DayOffRequest(**attrs)
 
 
@@ -38,7 +47,12 @@ class RulesConfigSerializer(serializers.Serializer):
     max_consecutive_nights = serializers.IntegerField(required=False, min_value=1)
     max_weekly_duration = serializers.DurationField(required=False, min_value=timedelta(0))
 
-    def validate(self, attrs):
+    def validate(self, attrs: dict[str, Any]) -> RulesConfig:
+        """Construit la configuration du moteur à partir des seuils fournis.
+
+        Un seuil absent garde la valeur par défaut de `RulesConfig`.
+        """
+
         return RulesConfig(**attrs)
 
 

@@ -31,7 +31,7 @@ class ShiftQuerySet(models.QuerySet):
 
 class DayOffRequestQuerySet(models.QuerySet):
     def between(self, start: date, end: date) -> "DayOffRequestQuerySet":
-        """Demandes de repos dont le jour tombe entre deux dates, bornes incluse."""
+        """Demandes de repos dont le jour tombe entre deux dates, bornes incluses."""
 
         return self.filter(day__range=(start, end)).select_related("staff")
 
