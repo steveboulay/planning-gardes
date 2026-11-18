@@ -65,6 +65,12 @@ class Shift(models.Model):
         ]
         ordering = ["start", "staff__code"]
 
+    def __str__(self) -> str:
+        return (
+            f"{self.staff.code} : {self.kind} "
+            f"du {self.start:%d/%m/%Y %H:%M} au {self.end:%d/%m/%Y %H:%M}"
+        )
+
     def to_engine(self) -> engine.Shift:
         """Convertit le poste enregistré en poste du moteur de règles."""
 
@@ -88,6 +94,9 @@ class DayOffRequest(models.Model):
         constraints = [
             models.UniqueConstraint(fields=["staff", "day"], name="unique_day_off_request"),
         ]
+
+    def __str__(self) -> str:
+        return f"{self.staff.code} : repos demandé le {self.day:%d/%m/%Y}"
 
     def to_engine(self) -> engine.DayOffRequest:
         """Convertit la demande de repos enregistrée en une demande de repos du moteur de règles."""
