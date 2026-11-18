@@ -18,7 +18,7 @@ from schedules.models import DayOffRequest, Shift, ShiftQuerySet, StaffMember
 
 
 class CheckScheduleView(APIView):
-    def post(self, request) -> Response:
+    def post(self, request: Request) -> Response:
         serializer = CheckScheduleSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         violations = check_schedule(
@@ -51,7 +51,7 @@ class ShiftListView(ListAPIView):
 
 
 class StoredViolationsView(APIView):
-    def get(self, request) -> Response:
+    def get(self, request: Request) -> Response:
         start, end = validated_period(request)
         shifts = [shift.to_engine() for shift in Shift.objects.starting_between(start, end)]
         day_off_requests = [
