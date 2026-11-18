@@ -23,7 +23,7 @@ def test_admin_lists_stored_shifts(admin_client, nurse):
     assert "nurse-1" in response.content.decode()
 
 
-def test_overlapping_shift_is_reported_by_validation(admin_client, nurse):
+def test_overlapping_shift_is_reported_by_validation(nurse):
     Shift.objects.create(
         staff=nurse,
         start=datetime(2026, 11, 2, 8, 0),
@@ -41,3 +41,17 @@ def test_overlapping_shift_is_reported_by_validation(admin_client, nurse):
         overlapping.full_clean()
 
     assert error.value.messages == ["Ce soignant a déjà un poste sur ce créneau."]
+
+
+def test_shift_ending_before_its_start_is_reported_by_validation(nurse):
+    shift = Shift(
+        staff=nurse,
+        start=datetime(2026, 11, 2, 20, 0),
+        end=datetime(2026, 11, 2, 8, 0),
+        kind="nuit",
+    )
+
+    with pytest.raises(ValidationError) as error:
+        shift.full_clean()
+
+    assert error.value.messages == ["Un poste doit se terminer après son début."]
