@@ -78,3 +78,25 @@ def test_single_day_period_is_accepted(api_client):
     response = api_client.get(reverse("shift-list"), {"start": "2026-11-02", "end": "2026-11-02"})
 
     assert response.status_code == 200
+
+
+def test_stored_violations_of_the_period_are_returned(api_client, nurse):
+    store_shift(staff=nurse, start=datetime(2026, 11, 2, 8, 0))
+    store_shift(staff=nurse, start=datetime(2026, 11, 3, 7, 0))
+
+    response = api_client.get(
+        reverse("stored-violations"), {"start": "2026-11-02", "end": "2026-11-08"}
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "violations": [
+            {
+                "rule": "repos_quotidien",
+                "category": "légale",
+                "staff_id": "nurse-1",
+                "day": "2026-11-03",
+                "message": "Soignant nurse-1 : repos de 11:00 inférieur à 12:00.",
+            }
+        ]
+    }
