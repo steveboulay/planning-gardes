@@ -149,3 +149,64 @@ Ce projet est développé avec l'aide de Claude (Anthropic). J'écris le code et
 - `test_invalid_config_is_rejected`, zéro nuit consécutive autorisée : a fait naître `min_value=1`. Vérifié en retirant `min_value` : il échoue.
 - `test_shift_with_time_zone_is_rejected`, poste dont les heures portent `+01:00` : ajouté après la revue finale. A fait naître `input_formats` sur `start` et `end`. Il ne vérifiait d'abord que `start` : la revue a montré qu'en retirant `input_formats` de `end`, il passait toujours. D'où une seconde assertion. Vérifié en retirant `input_formats` de chaque champ : il échoue.
 - `test_negative_duration_config_is_rejected`, repos minimum et durée hebdomadaire négatifs : ajouté après la revue finale. Les deux champs sont envoyés dans la même requête, et le test vérifie que chacun reçoit son erreur. A fait naître `min_value=timedelta(0)` sur les deux `DurationField`. Vérifié en retirant `min_value` d'un champ, puis de l'autre : il échoue à chaque fois.
+
+## 2026-11-17 · Étape 3 : persistance avec PostgreSQL
+
+- **Demandé à l'IA :** le cahier des charges de l'étape (Docker Compose, modèles, contraintes en base, endpoints de lecture, admin), puis un accompagnement test par test, avec une revue de chaque push.
+- **Proposé :**
+  - le `compose.yaml` de PostgreSQL 18 (volume monté sur `/var/lib/postgresql`, nouveau chemin depuis l'image 18 ; port limité au poste ; `healthcheck` avec `pg_isready`) et le service PostgreSQL de la CI ;
+  - les trois modèles, leurs contraintes et la conversion `to_engine()` vers les objets du moteur, qui ne sait toujours rien de Django ;
+  - trois pièges relevés par l'IA sur une implémentation de référence : `TSTZRANGE` et non `TSRANGE`, puisque Django crée des colonnes `timestamp with time zone` ; l'extension `btree_gist`, à ajouter à la main dans la migration de la contrainte d'exclusion ; la `condition` de cette contrainte, sans laquelle la validation de l'admin lève une `DataError` ;
+  - les extensions VS Code YAML et Container Tools, le jeu de données de démonstration et le premier jet de la section « Base de données » du README.
+- **Gardé / corrigé :**
+  - Le plan faisait créer l'application `schedules` dans le commit de socle : ses fichiers générés, aux imports inutilisés, auraient fait échouer `ruff check`. L'application est née avec le premier modèle. Le plan affirmait aussi que `startapp` génère des fichiers au format de ruff : c'était faux, `black`, installé dans l'espace de travail de l'IA, avait reformaté sa référence. J'ai corrigé moi-même les apostrophes de `apps.py`.
+  - Mon bloc `DATABASES` n'avait pas été remplacé : `migrate` a recréé `db.sqlite3` et y a mis les tables. Trouvé en affichant `connection.vendor`.
+  - Ajoutés au plan pendant l'étape : `test_staff_code_cannot_be_stored_twice`, proposé par l'IA, `test_single_day_period_is_accepted`, de moi, et trois tests pour l'affichage des modèles.
+  - Deux migrations oubliées dans leur commit, la `0002` puis la `0009` : `makemigrations --check` les a signalées dans la CI, et je les ai ajoutées par amend. Les contrôles de la CI sont maintenant dans un alias, `verif`, lancé avant chaque commit.
+  - Le commit de l'admin ne faisait pas passer son test : le `__str__` de `StaffMember` était arrivé un commit plus tard. Poussés ensemble, les commits n'avaient été testés par la CI que sur le dernier. J'ai réécrit l'historique de la branche pour que chaque commit de code passe seul.
+- **Vérifié par :** ruff, `manage.py check`, `makemigrations --check` et pytest en local et dans la CI, avec PostgreSQL 18 en service ; la réintroduction de l'erreur visée par chaque test vert dès son premier lancement, dans la migration quand l'erreur porte sur une contrainte ; la démonstration du README, rejouée par l'IA sur mon code dans une base neuve (`migrate`, `loaddata`, `runserver`, `curl`).
+- **Bilan :** trois modèles, quatre contraintes en base, trois endpoints de lecture et l'admin, couverts par 23 nouveaux tests ; 76 tests en tout. Le moteur n'a pas changé.
+  - Ce qui a bien marché : les deux limites ouvertes depuis l'étape 1, les chevauchements et les demandes en double, sont réglées pour les données enregistrées, par la base elle-même ; la contrainte d'exclusion, propre à PostgreSQL, justifie le choix de cette base ; chaque test vert d'emblée a été vérifié.
+  - Ce qui a moins bien marché : les migrations oubliées ; plusieurs commits poussés d'un coup, ce qui a caché un commit rouge ; des erreurs de copier-coller dans les tests (`Shift.objects.get` pour relire une demande de repos) et dans les modèles (`models.Mode`, `CharFiled`, une annotation `-> engine.Shift` sur la conversion d'une demande) ; une première vue des infractions qui reprenait `CheckScheduleSerializer`, lequel valide un corps JSON absent d'un GET.
+- **Appris :**
+  - Un modèle Django hérite de `models.Model` ; ses champs sont des attributs de classe, et ce qui concerne la table entière (tri, contraintes) va dans sa classe `Meta`.
+  - `makemigrations` écrit une migration à chaque changement de modèle, même pour une option sans effet en base comme `ordering` ; elle se commite avec le modèle.
+  - Une migration est un fichier Python qu'on peut modifier, comme une migration Doctrine : `BtreeGistExtension()` doit y précéder la contrainte d'exclusion.
+  - Sur PostgreSQL, Django crée des colonnes `timestamp with time zone` même avec `USE_TZ = False`, et règle le fuseau de la connexion sur `TIME_ZONE`.
+  - `CheckConstraint` et `UniqueConstraint` sont dans `django.db.models`, `ExclusionConstraint` dans `django.contrib.postgres` ; depuis Django 6.0, une `CheckConstraint` prend `condition` et non `check`.
+  - `F("start")` désigne une colonne de la même ligne ; `start__date__range` filtre sur la date d'une colonne de date et heure, bornes incluses.
+  - Un `QuerySet` personnalisé, branché par `as_manager()`, joue le rôle des méthodes d'un repository Doctrine ; `select_related` ajoute une jointure et supprime le N+1.
+  - `pytest.mark.django_db` donne accès à la base, dans une transaction annulée après chaque test ; une `IntegrityError` casse cette transaction, donc le test doit s'arrêter là.
+  - pytest-django fournit `admin_client` et `django_assert_num_queries` ; une fixture s'injecte par le nom du paramètre et ne s'importe jamais ; `conftest.py` partage les fixtures entre les fichiers de tests.
+  - Un `ModelSerializer` déduit ses champs du modèle, à condition que `fields` soit dans sa `Meta` ; `SlugRelatedField` affiche une clé étrangère par un autre champ que son identifiant ; une `ValidationError` levée dans `get_queryset()` donne une réponse 400.
+  - `full_clean()` vérifie les contraintes en Python avant l'enregistrement, et c'est ce que fait l'admin ; `violation_error_message` remplace le message par défaut.
+  - Deux chaînes écrites l'une après l'autre sont collées par Python, mais une virgule entre elles crée un tuple.
+  - `return a, b` renvoie un tuple que l'appelant décompose avec `start, end = ...` ; `self` ne s'annote jamais.
+  - `git rebase --autostash` met de côté les modifications en cours le temps du rebase.
+  - Plusieurs commits poussés d'un coup ne sont testés par la CI que sur le dernier.
+
+### Tests
+
+- `test_stored_shift_converts_to_engine_shift`, une nuit enregistrée et relue depuis la base : écrit pas à pas avec l'IA. A fait naître l'application `schedules`, `StaffMember`, `Shift`, `to_engine()` et la première migration. La revue du modèle a relevé l'héritage de `models.Model` oublié, `CharFiled`, `engine.ShiftKind()` appelé au lieu d'être parcouru, un `@property` sur `to_engine`, puis `models.Mode`.
+- `test_shift_ending_before_its_start_cannot_be_stored` : a fait naître la `CheckConstraint`.
+- `test_staff_code_cannot_be_stored_twice` : a fait naître `unique=True` sur le code, qui sert de `staff_id` au moteur.
+- `test_stored_day_off_request_converts_to_engine_request` : a fait naître `DayOffRequest`. Le test relisait d'abord la demande avec `Shift.objects.get` : corrigé avant le code.
+- `test_day_off_request_cannot_be_stored_twice` : a fait naître la `UniqueConstraint`.
+- `test_overlapping_shifts_of_the_same_staff_cannot_be_stored` : a fait naître l'`ExclusionConstraint`, la fonction `TsTzRange` et l'extension `btree_gist`. Une variable inutilisée, signalée par ruff, a été retirée par un fixup.
+- `test_back_to_back_shifts_can_be_stored` : vert dès le premier lancement. Vérifié en écrivant `RangeBoundary(inclusive_upper=True)` dans la migration : il échoue.
+- `test_overlapping_shifts_of_different_staff_can_be_stored` : vert dès le premier lancement. Vérifié en retirant `("staff", "=")` de la migration : il échoue.
+- Remaniement, fixtures `api_client` et `nurse` déplacées dans `conftest.py` : aucune assertion modifiée.
+- `test_staff_members_are_listed`, soignants créés dans le désordre pour que le tri compte : a fait naître `StaffMemberSerializer`, `StaffMemberListView` et le tri par code. Vérifié en inversant le tri : il échoue. Retirer le tri ne suffit pas : PostgreSQL peut renvoyer le bon ordre par hasard.
+- `test_shifts_of_the_period_are_listed` : a fait naître `PeriodSerializer`, `StoredShiftSerializer`, `starting_between()`, `ShiftListView` et le tri des postes. La liste `fields` était d'abord hors de la `Meta`. Vérifié en inversant le tri, puis avec `start__range` au lieu de `start__date__range` : il échoue à chaque fois.
+- `test_period_is_required` : vert dès le premier lancement. Vérifié en passant les deux champs à `required=False` : il échoue.
+- `test_period_ending_before_its_start_is_rejected` : a fait naître `validate()` dans `PeriodSerializer`.
+- `test_single_day_period_is_accepted` : idée et test de moi, pour fixer la borne. Vérifié en remplaçant `<` par `<=` : il échoue.
+- Remaniement, fonction `store_shift` dans les tests de l'API : aucune assertion modifiée.
+- `test_stored_violations_of_the_period_are_returned` : a fait naître `StoredViolationsView`. Ma première version reprenait `CheckScheduleSerializer` et jetait la liste des postes convertis : corrigée avant le commit.
+- `test_stored_day_off_requests_are_used` : a fait naître `between()` et la transmission des demandes au moteur.
+- `test_violations_ignore_shifts_outside_the_period` : vert dès le premier lancement. Vérifié en remplaçant `starting_between()` par `Shift.objects.all()` dans la vue : il échoue. Il fixe aussi une limite notée dans le README.
+- `test_violations_are_computed_with_two_queries` : huit requêtes avant le code ; a fait naître les deux `select_related`. La première version ne créait aucune demande de repos, et le `select_related` des demandes n'était donc pas couvert : trouvé par l'IA en le retirant, corrigé par un fixup. Vérifié en retirant chaque `select_related` : il échoue à chaque fois.
+- `test_admin_lists_stored_shifts` : a fait naître `admin.py`, la route `admin/` et le `__str__` de `StaffMember`. La fixture `admin_client` était d'abord utilisée sans être en paramètre du test.
+- `test_staff_member_is_displayed_with_its_code_and_name`, `test_shift_is_displayed_with_its_staff_kind_and_slot` et `test_day_off_request_is_displayed_with_its_staff_and_day` : ajoutés pour les `__str__` des modèles. Le premier, vert d'emblée, a été vérifié en changeant le format ; les deux autres ont fait naître leur `__str__`. Celui des postes renvoyait d'abord un tuple, à cause d'une virgule entre deux f-strings.
+- `test_overlapping_shift_is_reported_by_validation` : a fait naître le message de la contrainte d'exclusion.
+- `test_shift_ending_before_its_start_is_reported_by_validation` : échouait sur une `DataError` de PostgreSQL ; a fait naître la `condition` de la contrainte d'exclusion et le message de la `CheckConstraint`. Vérifié en retirant chacun : il échoue à chaque fois.
