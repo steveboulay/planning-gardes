@@ -73,3 +73,10 @@ def test_overlapping_shifts_of_the_same_staff_cannot_be_stored(nurse):
 
     with pytest.raises(IntegrityError):
         store_shift(nurse, datetime(2026, 11, 2, 19, 0), kind="nuit")
+
+
+def test_back_to_back_shifts_can_be_stored(nurse):
+    store_shift(nurse, datetime(2026, 11, 2, 8, 0), kind="jour")
+    store_shift(nurse, datetime(2026, 11, 2, 20, 0), kind="nuit")
+
+    assert Shift.objects.count() == 2
