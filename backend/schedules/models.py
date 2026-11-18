@@ -21,6 +21,9 @@ class StaffMember(models.Model):
     class Meta:
         ordering = ["code"]
 
+    def __str__(self) -> str:
+        return f"{self.code} ({self.full_name})"
+
 
 class ShiftQuerySet(models.QuerySet):
     def starting_between(self, start: date, end: date) -> "ShiftQuerySet":
