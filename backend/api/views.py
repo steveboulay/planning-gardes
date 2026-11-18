@@ -14,7 +14,7 @@ from api.serializers import (
 )
 from planning_rules.models import DEFAULT_CONFIG
 from planning_rules.rules import check_schedule
-from schedules.models import Shift, StaffMember
+from schedules.models import DayOffRequest, Shift, StaffMember
 
 
 class CheckScheduleView(APIView):
@@ -54,5 +54,8 @@ class StoredViolationsView(APIView):
     def get(self, request):
         start, end = validated_period(request)
         shifts = [shift.to_engine() for shift in Shift.objects.starting_between(start, end)]
-        violations = check_schedule(shifts=shifts)
+        day_off_requests = [
+            day_off.to_engine() for day_off in DayOffRequest.objects.between(start, end)
+        ]
+        violations = check_schedule(shifts=shifts, requests=day_off_requests)
         return Response({"violations": ViolationSerializer(violations, many=True).data})

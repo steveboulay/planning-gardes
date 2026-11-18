@@ -28,6 +28,12 @@ class ShiftQuerySet(models.QuerySet):
         return self.filter(start__date__range=(start, end))
 
 
+class DayOffRequestQuerySet(models.QuerySet):
+    def between(self, start: date, end: date) -> "DayOffRequestQuerySet":
+        """Demandes de repos commencent entre deux dates, bornes incluses."""
+        return self.filter(day__range=(start, end))
+
+
 class Shift(models.Model):
     staff = models.ForeignKey(StaffMember, on_delete=models.CASCADE, related_name="shifts")
     start = models.DateTimeField()
@@ -70,6 +76,8 @@ class DayOffRequest(models.Model):
         StaffMember, on_delete=models.CASCADE, related_name="day_off_requests"
     )
     day = models.DateField()
+
+    objects = DayOffRequestQuerySet.as_manager()
 
     class Meta:
         constraints = [
