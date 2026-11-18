@@ -61,6 +61,7 @@ class Shift(models.Model):
                     (TsTzRange("start", "end", RangeBoundary()), RangeOperators.OVERLAPS),
                     ("staff", RangeOperators.EQUAL),
                 ],
+                violation_error_message="Ce soignant a déjà un poste sur ce créneau.",
             ),
         ]
         ordering = ["start", "staff__code"]
