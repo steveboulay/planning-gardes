@@ -48,3 +48,11 @@ class ShiftListView(ListAPIView):
     def get_queryset(self):
         start, end = validated_period(self.request)
         return Shift.objects.starting_between(start, end)
+
+
+class StoredViolationsView(APIView):
+    def get(self, request):
+        start, end = validated_period(request)
+        shifts = [shift.to_engine() for shift in Shift.objects.starting_between(start, end)]
+        violations = check_schedule(shifts=shifts)
+        return Response({"violations": ViolationSerializer(violations, many=True).data})
