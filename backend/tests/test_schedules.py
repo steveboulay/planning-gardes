@@ -66,3 +66,10 @@ def test_day_off_request_cannot_be_stored_twice(nurse):
 
     with pytest.raises(IntegrityError):
         DayOffRequest.objects.create(staff=nurse, day=date(2026, 11, 4))
+
+
+def test_overlapping_shifts_of_the_same_staff_cannot_be_stored(nurse):
+    store_shift(nurse, datetime(2026, 11, 2, 8, 0), kind="jour")
+
+    with pytest.raises(IntegrityError):
+        store_shift(nurse, datetime(2026, 11, 2, 19, 0), kind="nuit")
