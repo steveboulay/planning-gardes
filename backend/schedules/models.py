@@ -1,6 +1,15 @@
+from django.contrib.postgres.constraints import ExclusionConstraint
+from django.contrib.postgres.fields import DateTimeRangeField, RangeBoundary, RangeOperators
 from django.db import models
 
 from planning_rules import models as engine
+
+
+class TsTzRange(models.Func):
+    """Intervalle PostgreSQL entre deux dates, début inclus et fin exclue."""
+
+    function = "TSTZRANGE"
+    output_field = DateTimeRangeField()
 
 
 class StaffMember(models.Model):
@@ -21,6 +30,13 @@ class Shift(models.Model):
             models.CheckConstraint(
                 condition=models.Q(end__gt=models.F("start")),
                 name="shift_ends_after_start",
+            ),
+            ExclusionConstraint(
+                name="exclude_overlapping_shifts",
+                expressions=[
+                    (TsTzRange("start", "end", RangeBoundary()), RangeOperators.OVERLAPS),
+                    ("staff", RangeOperators.EQUAL),
+                ],
             ),
         ]
 
