@@ -80,3 +80,11 @@ def test_back_to_back_shifts_can_be_stored(nurse):
     store_shift(nurse, datetime(2026, 11, 2, 20, 0), kind="nuit")
 
     assert Shift.objects.count() == 2
+
+
+def test_overlapping_shifts_of_different_staff_can_be_stored(nurse):
+    nurse2 = StaffMember.objects.create(code="nurse-2", full_name="André Martin")
+    store_shift(nurse, datetime(2026, 11, 2, 8, 0), kind="jour")
+    store_shift(nurse2, datetime(2026, 11, 2, 8, 0), kind="jour")
+
+    assert Shift.objects.count() == 2
