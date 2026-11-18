@@ -54,6 +54,7 @@ class Shift(models.Model):
             models.CheckConstraint(
                 condition=models.Q(end__gt=models.F("start")),
                 name="shift_ends_after_start",
+                violation_error_message="Un poste doit se terminer après son début.",
             ),
             ExclusionConstraint(
                 name="exclude_overlapping_shifts",
@@ -62,6 +63,7 @@ class Shift(models.Model):
                     ("staff", RangeOperators.EQUAL),
                 ],
                 violation_error_message="Ce soignant a déjà un poste sur ce créneau.",
+                condition=models.Q(end__gt=models.F("start")),
             ),
         ]
         ordering = ["start", "staff__code"]
