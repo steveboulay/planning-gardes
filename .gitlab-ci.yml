@@ -7,6 +7,10 @@ backend:
   variables:
     UV_CACHE_DIR: "$CI_PROJECT_DIR/.uv-cache"
     UV_LINK_MODE: copy
+    POSTGRES_DB: planning
+    POSTGRES_USER: planning
+    POSTGRES_PASSWORD: planning
+    POSTGRES_HOST: postgres
   cache:
     key:
       files:
@@ -21,5 +25,8 @@ backend:
     - uv run ruff check .
     - uv run ruff format --check .
     - uv run python manage.py check
+    - uv run python manage.py makemigrations --check --dry-run
     - uv run pytest
     - uv cache prune --ci
+  services:
+    - postgres:18

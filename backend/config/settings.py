@@ -44,6 +44,8 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "rest_framework",
     "api",
+    "django.contrib.postgres",
+    "schedules",
 ]
 
 MIDDLEWARE = [
@@ -79,10 +81,16 @@ WSGI_APPLICATION = "config.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/6.1/ref/settings/#databases
 
+# Base PostgreSQL de compose.yaml. Les valeurs par défaut ne servent qu'au développement :
+# la CI et la production les remplacent par des variables d'environnement.
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": os.environ.get("POSTGRES_DB", "planning"),
+        "USER": os.environ.get("POSTGRES_USER", "planning"),
+        "PASSWORD": os.environ.get("POSTGRES_PASSWORD", "planning"),
+        "HOST": os.environ.get("POSTGRES_HOST", "localhost"),
+        "PORT": os.environ.get("POSTGRES_PORT", "5432"),
     }
 }
 

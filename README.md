@@ -58,19 +58,28 @@ for violation in check_schedule(shifts):
 2026-11-03 légale Soignant nurse-1 : repos de 11:00 inférieur à 12:00.
 ```
 
-## L'API
+## Base de données
 
-Une API Django REST Framework expose le moteur : elle reçoit un planning en JSON et renvoie ses infractions. Elle n'a pas encore de base de données et ne conserve rien. Le code est réparti en trois dossiers de `backend/` : `planning_rules/` pour le moteur, `api/` pour les serializers et la vue, `config/` pour les réglages de Django.
-
-Depuis `backend/`, lancer le serveur de développement :
+Les soignants, les postes et les demandes de repos sont stockés dans PostgreSQL 18, lancé avec Docker Compose. Depuis la racine du dépôt :
 
 ```bash
+docker compose up -d
+cd backend
+uv run python manage.py migrate
+uv run python manage.py loaddata demo
+uv run python manage.py createsuperuser
 uv run python manage.py runserver
 ```
 
-Au démarrage, Django signale des migrations non appliquées : c'est sans effet, puisqu'aucune base n'est utilisée.
+`loaddata demo` charge une semaine de démonstration, du 2 au 8 novembre 2026, avec une infraction de chaque catégorie. L'admin de Django, à l'adresse http://127.0.0.1:8000/admin/, permet de consulter et de saisir les données.
 
-Puis, dans un autre terminal :
+La base refuse trois sortes de données incohérentes, par des contraintes PostgreSQL : un poste qui finit avant de commencer, une demande de repos enregistrée deux fois, et deux postes d'un même soignant qui se chevauchent. Cette dernière est une contrainte d'exclusion, propre à PostgreSQL, qui s'appuie sur l'extension `btree_gist`.
+
+## L'API
+
+Une API Django REST Framework expose le moteur de deux façons : un endpoint sans état, qui vérifie le planning envoyé en JSON, et des endpoints de lecture, qui vérifient le planning enregistré en base. Le code est réparti en quatre dossiers de `backend/` : `planning_rules/` pour le moteur, `schedules/` pour les modèles et l'admin, `api/` pour les serializers et les vues, `config/` pour les réglages de Django.
+
+### Vérifier un planning envoyé
 
 ```bash
 curl -X POST http://127.0.0.1:8000/api/schedule/check/ \
@@ -115,17 +124,61 @@ Format de la requête :
 
 Erreurs : un code 400 avec le détail des champs en faute, par exemple `{"shifts": {"0": {"non_field_errors": ["Un poste doit se terminer après son début."]}}}` pour un poste qui finit avant de commencer, et un code 405 pour toute autre méthode que POST.
 
+### Lire le planning enregistré
+
+- `GET /api/staff/` : les soignants, triés par code.
+- `GET /api/shifts/?start=2026-11-02&end=2026-11-08` : les postes qui commencent dans la période, bornes incluses, triés par début.
+- `GET /api/schedule/violations/?start=2026-11-02&end=2026-11-08` : les infractions du planning enregistré pour la période, avec les seuils par défaut.
+
+`start` et `end` sont obligatoires. Une période d'un seul jour est acceptée, une période qui finit avant de commencer est refusée (code 400).
+
+Avec les données de démonstration :
+
+```bash
+curl "http://127.0.0.1:8000/api/schedule/violations/?start=2026-11-02&end=2026-11-08"
+```
+
+```json
+{
+  "violations": [
+    {
+      "rule": "repos_quotidien",
+      "category": "légale",
+      "staff_id": "nurse-1",
+      "day": "2026-11-03",
+      "message": "Soignant nurse-1 : repos de 11:00 inférieur à 12:00."
+    },
+    {
+      "rule": "nuits_consecutives",
+      "category": "collective",
+      "staff_id": "nurse-2",
+      "day": "2026-11-05",
+      "message": "Soignant nurse-2 : plus de 3 nuits consécutives."
+    },
+    {
+      "rule": "desiderata",
+      "category": "individuelle",
+      "staff_id": "nurse-3",
+      "day": "2026-11-06",
+      "message": "Soignant nurse-3 : poste le 06/11/2026, jour de repos demandé."
+    }
+  ]
+}
+```
+
 ## Lancer les tests
 
 Il faut [uv](https://docs.astral.sh/uv/), qui installe Python 3.13 si besoin.
 
 ```bash
+docker compose up -d
 cd backend
 uv sync
 uv run pytest
 uv run ruff check .
 uv run ruff format --check .
 uv run python manage.py check
+uv run python manage.py makemigrations --check --dry-run
 ```
 
 La CI GitLab lance les mêmes commandes à chaque push.
@@ -134,10 +187,12 @@ La CI GitLab lance les mêmes commandes à chaque push.
 
 - Les dates n'ont pas de fuseau horaire. Une nuit qui traverse un changement d'heure dure en réalité 11 ou 13 heures.
 - La durée hebdomadaire est comptée par semaine civile, du lundi au dimanche, alors que la réglementation raisonne sur toute période de sept jours.
-- Deux postes qui se chevauchent apparaissent comme un repos négatif, sans règle dédiée.
-- Une demande de repos saisie deux fois donne deux infractions.
+- Deux postes d'un même soignant qui se chevauchent sont refusés par la base. Envoyés à `POST /api/schedule/check/`, qui ne stocke rien, ils apparaissent toujours comme un repos négatif.
+- Une demande de repos ne peut pas être enregistrée deux fois. Envoyée deux fois à `POST /api/schedule/check/`, elle donne toujours deux infractions.
 - Une nuit qui commence la veille d'un jour de repos demandé et se termine ce jour-là n'est pas une infraction : la règle porte sur le jour où le poste commence.
-- L'API n'a pas d'authentification : c'est une API de démonstration, sans état.
+- L'API n'a pas d'authentification : c'est une API de démonstration. Aucun endpoint n'écrit en base, les données se saisissent dans l'admin ou se chargent par fixture.
+- Les infractions d'une période ne voient que les postes de cette période : un repos trop court entre le dimanche soir et le lundi matin de la semaine suivante, ou une série de nuits commencée la semaine précédente, n'est pas signalé.
+- Les identifiants de `compose.yaml` sont des valeurs de développement pour une base locale, pas des secrets.
 
 ## Usage de l'IA
 
@@ -145,9 +200,8 @@ Le projet est développé avec l'aide de Claude (Anthropic) : découpage des ét
 
 ## Suite
 
-1. La persistance : modèles Django, PostgreSQL avec Docker Compose, migrations.
-2. Un front React et TypeScript : la grille de la semaine, avec les infractions mises en évidence.
-3. Des scénarios de bout en bout avec Playwright.
+1. Un front React et TypeScript : la grille de la semaine, avec les infractions mises en évidence.
+2. Des scénarios de bout en bout avec Playwright.
 
 ## Licence
 

@@ -1,13 +1,6 @@
 from datetime import date, datetime, timedelta, timezone
 
-import pytest
 from django.urls import reverse
-from rest_framework.test import APIClient
-
-
-@pytest.fixture
-def api_client():
-    return APIClient()
 
 
 def shift_payload(staff_id: str, start: datetime, end: datetime, kind: str):

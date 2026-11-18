@@ -1,0 +1,14 @@
+[
+  {"model": "schedules.staffmember", "pk": 1, "fields": {"code": "nurse-1", "full_name": "Alice Martin"}},
+  {"model": "schedules.staffmember", "pk": 2, "fields": {"code": "nurse-2", "full_name": "Bruno Petit"}},
+  {"model": "schedules.staffmember", "pk": 3, "fields": {"code": "nurse-3", "full_name": "Chloé Durand"}},
+  {"model": "schedules.shift", "pk": 1, "fields": {"staff": 1, "start": "2026-11-02T08:00:00", "end": "2026-11-02T20:00:00", "kind": "jour"}},
+  {"model": "schedules.shift", "pk": 2, "fields": {"staff": 1, "start": "2026-11-03T07:00:00", "end": "2026-11-03T19:00:00", "kind": "jour"}},
+  {"model": "schedules.shift", "pk": 3, "fields": {"staff": 2, "start": "2026-11-02T20:00:00", "end": "2026-11-03T08:00:00", "kind": "nuit"}},
+  {"model": "schedules.shift", "pk": 4, "fields": {"staff": 2, "start": "2026-11-03T20:00:00", "end": "2026-11-04T08:00:00", "kind": "nuit"}},
+  {"model": "schedules.shift", "pk": 5, "fields": {"staff": 2, "start": "2026-11-04T20:00:00", "end": "2026-11-05T08:00:00", "kind": "nuit"}},
+  {"model": "schedules.shift", "pk": 6, "fields": {"staff": 2, "start": "2026-11-05T20:00:00", "end": "2026-11-06T08:00:00", "kind": "nuit"}},
+  {"model": "schedules.shift", "pk": 7, "fields": {"staff": 3, "start": "2026-11-04T08:00:00", "end": "2026-11-04T20:00:00", "kind": "jour"}},
+  {"model": "schedules.shift", "pk": 8, "fields": {"staff": 3, "start": "2026-11-06T08:00:00", "end": "2026-11-06T20:00:00", "kind": "jour"}},
+  {"model": "schedules.dayoffrequest", "pk": 1, "fields": {"staff": 3, "day": "2026-11-06"}}
+]
