@@ -5,7 +5,7 @@ from schedules.models import StaffMember
 
 
 @pytest.fixture
-def api_client():
+def api_client() -> APIClient:
     """Client de test de DRF, sans authentification.
 
     Il appelle l'application directement, sans serveur HTTP : c'est l'équivalent
@@ -16,7 +16,7 @@ def api_client():
 
 
 @pytest.fixture
-def nurse():
+def nurse() -> StaffMember:
     """Soignant nurse-1, enregistré en base."""
 
     return StaffMember.objects.create(code="nurse-1", full_name="Alice Martin")

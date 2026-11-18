@@ -9,7 +9,7 @@ from schedules.models import DayOffRequest, Shift, StaffMember
 pytestmark = pytest.mark.django_db
 
 
-def store_shift(staff, start, hours=12, kind="jour"):
+def store_shift(staff: StaffMember, start: datetime, hours: int = 12, kind: str = "jour") -> Shift:
     """Enregistre un poste en base et le retourne.
 
     Un poste par défaut est un poste de jour de 12 heures.
