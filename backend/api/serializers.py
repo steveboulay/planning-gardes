@@ -3,6 +3,7 @@ from datetime import timedelta
 from rest_framework import serializers
 
 from planning_rules.models import DayOffRequest, RulesConfig, Shift, ShiftKind
+from schedules.models import Shift as StoredShift
 from schedules.models import StaffMember
 
 
@@ -59,3 +60,16 @@ class StaffMemberSerializer(serializers.ModelSerializer):
     class Meta:
         model = StaffMember
         fields = ["code", "full_name"]
+
+
+class PeriodSerializer(serializers.Serializer):
+    start = serializers.DateField()
+    end = serializers.DateField()
+
+
+class StoredShiftSerializer(serializers.ModelSerializer):
+    staff = serializers.SlugRelatedField(slug_field="code", read_only=True)
+
+    class Meta:
+        model = StoredShift
+        fields = ["id", "staff", "start", "end", "kind"]

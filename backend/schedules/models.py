@@ -1,3 +1,5 @@
+from datetime import date
+
 from django.contrib.postgres.constraints import ExclusionConstraint
 from django.contrib.postgres.fields import DateTimeRangeField, RangeBoundary, RangeOperators
 from django.db import models
@@ -20,6 +22,12 @@ class StaffMember(models.Model):
         ordering = ["code"]
 
 
+class ShiftQuerySet(models.QuerySet):
+    def starting_between(self, start: date, end: date) -> "ShiftQuerySet":
+        """Postes qui commencent entre deux dates, bornes incluses."""
+        return self.filter(start__date__range=(start, end))
+
+
 class Shift(models.Model):
     staff = models.ForeignKey(StaffMember, on_delete=models.CASCADE, related_name="shifts")
     start = models.DateTimeField()
@@ -27,6 +35,8 @@ class Shift(models.Model):
     kind = models.CharField(
         max_length=4, choices=[(kind.value, kind.value) for kind in engine.ShiftKind]
     )
+
+    objects = ShiftQuerySet.as_manager()
 
     class Meta:
         constraints = [
@@ -42,6 +52,7 @@ class Shift(models.Model):
                 ],
             ),
         ]
+        ordering = ["start", "staff__code"]
 
     def to_engine(self) -> engine.Shift:
         """Convertit le poste enregistré en poste du moteur de règles."""

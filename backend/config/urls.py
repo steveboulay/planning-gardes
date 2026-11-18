@@ -17,9 +17,10 @@ Including another URLconf
 
 from django.urls import path
 
-from api.views import CheckScheduleView, StaffMemberListView
+from api.views import CheckScheduleView, ShiftListView, StaffMemberListView
 
 urlpatterns = [
     path("api/schedule/check/", CheckScheduleView.as_view(), name="check-schedule"),
     path("api/staff/", StaffMemberListView.as_view(), name="staff-list"),
+    path("api/shifts/", ShiftListView.as_view(), name="shift-list"),
 ]
