@@ -25,13 +25,15 @@ class StaffMember(models.Model):
 class ShiftQuerySet(models.QuerySet):
     def starting_between(self, start: date, end: date) -> "ShiftQuerySet":
         """Postes qui commencent entre deux dates, bornes incluses."""
-        return self.filter(start__date__range=(start, end))
+
+        return self.filter(start__date__range=(start, end)).select_related("staff")
 
 
 class DayOffRequestQuerySet(models.QuerySet):
     def between(self, start: date, end: date) -> "DayOffRequestQuerySet":
-        """Demandes de repos commencent entre deux dates, bornes incluses."""
-        return self.filter(day__range=(start, end))
+        """Demandes de repos dont le jour tombe entre deux dates, bornes incluse."""
+
+        return self.filter(day__range=(start, end)).select_related("staff")
 
 
 class Shift(models.Model):
