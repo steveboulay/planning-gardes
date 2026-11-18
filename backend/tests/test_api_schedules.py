@@ -1,9 +1,9 @@
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 
 import pytest
 from django.urls import reverse
 
-from schedules.models import Shift, StaffMember
+from schedules.models import DayOffRequest, Shift, StaffMember
 
 pytestmark = pytest.mark.django_db
 
@@ -100,3 +100,15 @@ def test_stored_violations_of_the_period_are_returned(api_client, nurse):
             }
         ]
     }
+
+
+def test_stored_day_off_requests_are_used(api_client, nurse):
+    store_shift(staff=nurse, start=datetime(2026, 11, 4, 8, 0))
+    DayOffRequest.objects.create(staff=nurse, day=date(2026, 11, 4))
+
+    response = api_client.get(
+        reverse("stored-violations"), {"start": "2026-11-02", "end": "2026-11-08"}
+    )
+
+    assert response.status_code == 200
+    assert [violation["rule"] for violation in response.json()["violations"]] == ["desiderata"]
