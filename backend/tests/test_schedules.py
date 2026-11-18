@@ -81,3 +81,19 @@ def test_overlapping_shifts_of_different_staff_can_be_stored(nurse):
     store_shift(nurse2, datetime(2026, 11, 2, 8, 0), kind="jour")
 
     assert Shift.objects.count() == 2
+
+
+def test_staff_member_is_displayed_with_its_code_and_name(nurse):
+    assert str(nurse) == "nurse-1 (Alice Martin)"
+
+
+def test_shift_is_displayed_with_its_staff_kind_and_slot(nurse):
+    shift = store_shift(nurse, datetime(2026, 11, 2, 20, 0), kind="nuit")
+
+    assert str(shift) == "nurse-1 : nuit du 02/11/2026 20:00 au 03/11/2026 08:00"
+
+
+def test_day_off_request_is_displayed_with_its_staff_and_day(nurse):
+    day_off_request = DayOffRequest.objects.create(staff=nurse, day=date(2026, 11, 4))
+
+    assert str(day_off_request) == "nurse-1 : repos demandé le 04/11/2026"
