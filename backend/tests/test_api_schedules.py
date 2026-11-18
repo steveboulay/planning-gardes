@@ -66,3 +66,11 @@ def test_shifts_of_the_period_are_listed(api_client, nurse):
             "kind": "nuit",
         },
     ]
+
+
+def test_period_is_required(api_client):
+    response = api_client.get(reverse("shift-list"))
+
+    assert response.status_code == 400
+    assert "start" in response.json()
+    assert "end" in response.json()
