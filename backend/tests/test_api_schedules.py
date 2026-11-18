@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import pytest
 from django.urls import reverse
@@ -6,6 +6,17 @@ from django.urls import reverse
 from schedules.models import Shift, StaffMember
 
 pytestmark = pytest.mark.django_db
+
+
+def store_shift(staff: StaffMember, start: datetime, hours: int = 12, kind: str = "jour") -> Shift:
+    """Enregistre un poste en base et le retourne.
+
+    Un poste par défaut est un poste de jour de 12 heures.
+    """
+
+    return Shift.objects.create(
+        staff=staff, start=start, end=start + timedelta(hours=hours), kind=kind
+    )
 
 
 def test_staff_members_are_listed(api_client):
@@ -22,30 +33,10 @@ def test_staff_members_are_listed(api_client):
 
 
 def test_shifts_of_the_period_are_listed(api_client, nurse):
-    Shift.objects.create(
-        staff=nurse,
-        start=datetime(2026, 11, 1, 8, 0),
-        end=datetime(2026, 11, 1, 20, 0),
-        kind="jour",
-    )
-    sunday_night = Shift.objects.create(
-        staff=nurse,
-        start=datetime(2026, 11, 8, 20, 0),
-        end=datetime(2026, 11, 9, 8, 0),
-        kind="nuit",
-    )
-    monday = Shift.objects.create(
-        staff=nurse,
-        start=datetime(2026, 11, 2, 8, 0),
-        end=datetime(2026, 11, 2, 20, 0),
-        kind="jour",
-    )
-    Shift.objects.create(
-        staff=nurse,
-        start=datetime(2026, 11, 9, 20, 0),
-        end=datetime(2026, 11, 10, 8, 0),
-        kind="nuit",
-    )
+    store_shift(staff=nurse, start=datetime(2026, 11, 1, 8, 0))
+    sunday_night = store_shift(staff=nurse, start=datetime(2026, 11, 8, 20, 0), kind="nuit")
+    monday = store_shift(staff=nurse, start=datetime(2026, 11, 2, 8, 0))
+    store_shift(staff=nurse, start=datetime(2026, 11, 9, 20, 0), kind="nuit")
 
     response = api_client.get(reverse("shift-list"), {"start": "2026-11-02", "end": "2026-11-08"})
 
