@@ -16,6 +16,9 @@ class StaffMember(models.Model):
     code = models.CharField(max_length=50, unique=True)
     full_name = models.CharField(max_length=200)
 
+    class Meta:
+        ordering = ["code"]
+
 
 class Shift(models.Model):
     staff = models.ForeignKey(StaffMember, on_delete=models.CASCADE, related_name="shifts")

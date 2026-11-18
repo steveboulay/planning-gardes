@@ -3,6 +3,7 @@ from datetime import timedelta
 from rest_framework import serializers
 
 from planning_rules.models import DayOffRequest, RulesConfig, Shift, ShiftKind
+from schedules.models import StaffMember
 
 
 class ShiftSerializer(serializers.Serializer):
@@ -52,3 +53,9 @@ class ViolationSerializer(serializers.Serializer):
     staff_id = serializers.CharField()
     day = serializers.DateField()
     message = serializers.CharField()
+
+
+class StaffMemberSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = StaffMember
+        fields = ["code", "full_name"]

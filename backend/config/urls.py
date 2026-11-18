@@ -17,8 +17,9 @@ Including another URLconf
 
 from django.urls import path
 
-from api.views import CheckScheduleView
+from api.views import CheckScheduleView, StaffMemberListView
 
 urlpatterns = [
     path("api/schedule/check/", CheckScheduleView.as_view(), name="check-schedule"),
+    path("api/staff/", StaffMemberListView.as_view(), name="staff-list"),
 ]
