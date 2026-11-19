@@ -30,3 +30,21 @@ backend:
     - uv cache prune --ci
   services:
     - postgres:18
+
+frontend:
+  stage: test
+  image: node:24-slim
+  cache:
+    key:
+      files:
+        - frontend/package-lock.json
+    paths:
+      - .npm
+  before_script:
+    - cd frontend
+    - npm ci --cache "$CI_PROJECT_DIR/.npm" --prefer-offline
+  script:
+    - npm run lint
+    - npm run format:check
+    - npm test
+    - npm run build
