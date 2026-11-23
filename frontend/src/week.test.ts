@@ -50,4 +50,8 @@ describe("weekDays", () => {
   it("starts on the Monday of the given day's week", () => {
     expect(weekDays("2026-11-04")[0]).toBe("2026-11-02");
   });
+
+  it("crosses the end of a month", () => {
+    expect(weekDays("2026-11-30").at(-1)).toBe("2026-12-06");
+  });
 });
