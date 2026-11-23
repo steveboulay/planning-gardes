@@ -54,3 +54,9 @@ export function addWeeks(day: IsoDate, weeks: number): IsoDate {
 export function formatDayHeader(day: IsoDate): string {
   return DAY_HEADER.format(toDate(day));
 }
+
+/** Date complète : "02/11/2026". */
+export function formatDate(day: IsoDate): string {
+  const [year, month, date] = day.split("-");
+  return `${date}/${month}/${year}`;
+}
