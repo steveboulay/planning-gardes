@@ -46,4 +46,8 @@ describe("weekDays", () => {
       "2026-11-08",
     ]);
   });
+
+  it("starts on the Monday of the given day's week", () => {
+    expect(weekDays("2026-11-04")[0]).toBe("2026-11-02");
+  });
 });
