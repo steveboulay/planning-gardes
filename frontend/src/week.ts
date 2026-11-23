@@ -18,3 +18,16 @@ export function toIsoDate(date: Date): IsoDate {
 export function isIsoDate(value: string): boolean {
   return toIsoDate(toDate(value)) === value;
 }
+
+/** Ajoute des jours au calendrier, sans passer par des millisecondes. */
+function addDays(day: IsoDate, days: number): IsoDate {
+  const date = toDate(day);
+  date.setDate(date.getDate() + days);
+  return toIsoDate(date);
+}
+
+/** Lundi de la semaine d'un jour, du lundi au dimanche. */
+export function mondayOf(day: IsoDate): IsoDate {
+  const daysSinceMonday = (toDate(day).getDay() + 6) % 7;
+  return addDays(day, -daysSinceMonday);
+}
