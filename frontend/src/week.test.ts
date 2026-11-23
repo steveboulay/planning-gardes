@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { toIsoDate, isIsoDate, mondayOf, weekDays, addWeeks } from "./week";
+import { toIsoDate, isIsoDate, mondayOf, weekDays, addWeeks, formatDayHeader } from "./week";
 
 describe("toIsoDate", () => {
   it("pads the month and the day with zeros", () => {
@@ -59,5 +59,17 @@ describe("weekDays", () => {
 describe("addWeeks", () => {
   it("goes back one week across the spring clock change", () => {
     expect(addWeeks("2026-03-30", -1)).toBe("2026-03-23");
+  });
+});
+
+describe("formatDayHeader", () => {
+  it("writes the short weekday, the day and the month", () => {
+    expect(formatDayHeader("2026-11-02")).toBe("lun. 02/11");
+    expect(formatDayHeader("2026-11-03")).toBe("mar. 03/11");
+    expect(formatDayHeader("2026-11-04")).toBe("mer. 04/11");
+    expect(formatDayHeader("2026-11-05")).toBe("jeu. 05/11");
+    expect(formatDayHeader("2026-11-06")).toBe("ven. 06/11");
+    expect(formatDayHeader("2026-11-07")).toBe("sam. 07/11");
+    expect(formatDayHeader("2026-11-08")).toBe("dim. 08/11");
   });
 });
