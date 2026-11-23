@@ -32,7 +32,8 @@ export function mondayOf(day: IsoDate): IsoDate {
   return addDays(day, -daysSinceMonday);
 }
 
-/** Les sept jours d'une semaine, du lundi au dimanche. */
-export function weekDays(monday: IsoDate): IsoDate[] {
+/** Les sept jours, du lundi au dimanche, de la semaine qui contient ce jour. */
+export function weekDays(day: IsoDate): IsoDate[] {
+  const monday = mondayOf(day);
   return Array.from({ length: 7 }, (_, index) => addDays(monday, index));
 }
