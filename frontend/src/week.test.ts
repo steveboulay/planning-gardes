@@ -24,4 +24,8 @@ describe("mondayOf", () => {
   it("returns the Monday of a Wednesday", () => {
     expect(mondayOf("2026-11-04")).toBe("2026-11-02");
   });
+
+  it("returns the day itself for a Monday", () => {
+    expect(mondayOf("2026-11-02")).toBe("2026-11-02");
+  });
 });
