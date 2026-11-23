@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { toIsoDate, isIsoDate, mondayOf, weekDays } from "./week";
+import { toIsoDate, isIsoDate, mondayOf, weekDays, addWeeks } from "./week";
 
 describe("toIsoDate", () => {
   it("pads the month and the day with zeros", () => {
@@ -53,5 +53,11 @@ describe("weekDays", () => {
 
   it("crosses the end of a month", () => {
     expect(weekDays("2026-11-30").at(-1)).toBe("2026-12-06");
+  });
+});
+
+describe("addWeeks", () => {
+  it("goes back one week across the spring clock change", () => {
+    expect(addWeeks("2026-03-30", -1)).toBe("2026-03-23");
   });
 });
