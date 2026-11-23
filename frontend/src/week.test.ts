@@ -28,4 +28,8 @@ describe("mondayOf", () => {
   it("returns the day itself for a Monday", () => {
     expect(mondayOf("2026-11-02")).toBe("2026-11-02");
   });
+
+  it("returns the previous Monday for a Sunday", () => {
+    expect(mondayOf("2026-11-08")).toBe("2026-11-02");
+  });
 });
