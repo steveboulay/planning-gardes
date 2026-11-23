@@ -37,3 +37,8 @@ export function weekDays(day: IsoDate): IsoDate[] {
   const monday = mondayOf(day);
   return Array.from({ length: 7 }, (_, index) => addDays(monday, index));
 }
+
+/** Le même jour, quelques semaines avant (nombre négatif) ou après. */
+export function addWeeks(day: IsoDate, weeks: number): IsoDate {
+  return addDays(day, 7 * weeks);
+}
