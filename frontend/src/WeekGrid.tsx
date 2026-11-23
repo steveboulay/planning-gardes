@@ -9,7 +9,7 @@ type WeekGridProps = {
 };
 
 /** Grille de la semaine : une ligne par soignant, une colonne par jour. */
-export function WeekGrid({ days }: WeekGridProps) {
+export function WeekGrid({ days, staff }: WeekGridProps) {
   return (
     <table className="week-grid">
       <thead>
@@ -22,6 +22,13 @@ export function WeekGrid({ days }: WeekGridProps) {
           ))}
         </tr>
       </thead>
+      <tbody>
+        {staff.map((member) => (
+          <tr key={member.code}>
+            <th scope="row">{member.full_name}</th>
+          </tr>
+        ))}
+      </tbody>
     </table>
   );
 }
