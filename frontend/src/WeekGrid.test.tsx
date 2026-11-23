@@ -63,4 +63,12 @@ describe("WeekGrid", () => {
     expect(cellOf("Alice Martin", 1)).toBeEmptyDOMElement();
     expect(cellOf("Bruno Petit", 0)).toBeEmptyDOMElement();
   });
+
+  it("shows a night in the cell of the day it starts", () => {
+    const shifts = [shift(1, "nurse-1", "2026-11-08T20:00:00", "2026-11-09T08:00:00", "nuit")];
+
+    render(<WeekGrid days={DAYS} staff={STAFF} shifts={shifts} violations={[]} />);
+
+    expect(cellOf("Alice Martin", 6)).toHaveTextContent("Nuit 20:00–08:00");
+  });
 });
