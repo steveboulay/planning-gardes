@@ -1,6 +1,13 @@
 /** Jour au format ISO, sans heure ni fuseau : "2026-11-02". */
 export type IsoDate = string;
 
+/** Formateur des en-têtes de colonne, créé une seule fois : sa construction coûte cher. */
+const DAY_HEADER = new Intl.DateTimeFormat("fr-FR", {
+  weekday: "short",
+  day: "2-digit",
+  month: "2-digit",
+});
+
 /** Construit la date locale d'un jour ISO, à minuit. */
 function toDate(day: IsoDate): Date {
   const [year, month, date] = day.split("-").map(Number);
@@ -41,4 +48,9 @@ export function weekDays(day: IsoDate): IsoDate[] {
 /** Le même jour, quelques semaines avant (nombre négatif) ou après. */
 export function addWeeks(day: IsoDate, weeks: number): IsoDate {
   return addDays(day, 7 * weeks);
+}
+
+/** En-tête de colonne : "lun. 02/11". */
+export function formatDayHeader(day: IsoDate): string {
+  return DAY_HEADER.format(toDate(day));
 }
