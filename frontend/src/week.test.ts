@@ -12,4 +12,10 @@ describe("isIsoDate", () => {
   it("accepts an existing day", () => {
     expect(isIsoDate("2026-11-02")).toBe(true);
   });
+
+  it("rejects a malformed or impossible day", () => {
+    expect(isIsoDate("2026-11-2")).toBe(false);
+    expect(isIsoDate("demain")).toBe(false);
+    expect(isIsoDate("2026-02-30")).toBe(false);
+  });
 });
