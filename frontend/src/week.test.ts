@@ -1,6 +1,14 @@
 import { describe, expect, it } from "vitest";
 
-import { toIsoDate, isIsoDate, mondayOf, weekDays, addWeeks, formatDayHeader } from "./week";
+import {
+  toIsoDate,
+  isIsoDate,
+  mondayOf,
+  weekDays,
+  addWeeks,
+  formatDayHeader,
+  formatDate,
+} from "./week";
 
 describe("toIsoDate", () => {
   it("pads the month and the day with zeros", () => {
@@ -71,5 +79,11 @@ describe("formatDayHeader", () => {
     expect(formatDayHeader("2026-11-06")).toBe("ven. 06/11");
     expect(formatDayHeader("2026-11-07")).toBe("sam. 07/11");
     expect(formatDayHeader("2026-11-08")).toBe("dim. 08/11");
+  });
+});
+
+describe("formatDate", () => {
+  it("writes the day, the month and the year", () => {
+    expect(formatDate("2026-11-02")).toBe("02/11/2026");
   });
 });
