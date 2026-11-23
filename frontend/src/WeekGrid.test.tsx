@@ -28,4 +28,13 @@ describe("WeekGrid", () => {
       "dim. 08/11",
     ]);
   });
+
+  it("shows one row per staff member, in the given order", () => {
+    const staff = [STAFF[1], STAFF[0]];
+
+    render(<WeekGrid days={DAYS} staff={staff} shifts={[]} violations={[]} />);
+
+    const names = screen.getAllByRole("rowheader").map((header) => header.textContent);
+    expect(names).toEqual(["Bruno Petit", "Alice Martin"]);
+  });
 });
