@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { toIsoDate, isIsoDate, mondayOf } from "./week";
+import { toIsoDate, isIsoDate, mondayOf, weekDays } from "./week";
 
 describe("toIsoDate", () => {
   it("pads the month and the day with zeros", () => {
@@ -31,5 +31,19 @@ describe("mondayOf", () => {
 
   it("returns the previous Monday for a Sunday", () => {
     expect(mondayOf("2026-11-08")).toBe("2026-11-02");
+  });
+});
+
+describe("weekDays", () => {
+  it("returns the seven days from Monday to Sunday", () => {
+    expect(weekDays("2026-11-02")).toEqual([
+      "2026-11-02",
+      "2026-11-03",
+      "2026-11-04",
+      "2026-11-05",
+      "2026-11-06",
+      "2026-11-07",
+      "2026-11-08",
+    ]);
   });
 });
