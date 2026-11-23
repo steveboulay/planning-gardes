@@ -14,7 +14,7 @@ export function toIsoDate(date: Date): IsoDate {
   return `${date.getFullYear()}-${month}-${day}`;
 }
 
-/** Vrai pour un jour ISO qui existe : relu puis réécrit, "2026-02-30" ne redonne pas la même chaîne. */
+/** Vrai pour un jour ISO qui existe : "2026-02-30" relu puis réécrit donne "2026-03-02". */
 export function isIsoDate(value: string): boolean {
   return toIsoDate(toDate(value)) === value;
 }
