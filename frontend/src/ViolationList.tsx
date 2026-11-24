@@ -13,6 +13,7 @@ export function ViolationList({ violations }: ViolationListProps) {
         <p>Aucune infraction cette semaine.</p>
       ) : (
         <ul>
+          {/* Clé par position : deux messages peuvent être identiques */}
           {violations.map((violation, index) => (
             <li key={index}>{violation.message}</li>
           ))}
