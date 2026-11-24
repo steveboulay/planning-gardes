@@ -124,4 +124,20 @@ describe("WeekGrid", () => {
 
     expect(within(cell).getByText(message)).toBeVisible();
   });
+
+  it("writes the number of violations in the plural", () => {
+    render(
+      <WeekGrid
+        days={DAYS}
+        staff={STAFF}
+        shifts={[]}
+        violations={[
+          violation("nurse-1", "2026-11-03", "Repos trop court."),
+          violation("nurse-1", "2026-11-03", "Trop d'heures sur la semaine."),
+        ]}
+      />,
+    );
+
+    expect(within(cellOf("Alice Martin", 1)).getByText("2 infractions")).toBeInTheDocument();
+  });
 });
