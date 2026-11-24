@@ -57,8 +57,8 @@ export function WeekGrid({ days, staff, shifts, violations }: WeekGridProps) {
                     <details>
                       <summary>{violationCount(messages.length)}</summary>
                       <ul>
-                        {messages.map((message) => (
-                          <li key={message}>{message}</li>
+                        {messages.map((message, index) => (
+                          <li key={index}>{message}</li>
                         ))}
                       </ul>
                     </details>
