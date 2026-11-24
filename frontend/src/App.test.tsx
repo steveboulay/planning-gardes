@@ -79,4 +79,20 @@ describe("App", () => {
     expect(screen.getByText("Chargement…")).toBeInTheDocument();
     expect(screen.queryByRole("rowheader", { name: "Alice Martin" })).not.toBeInTheDocument();
   });
+
+  it("loads the previous week", async () => {
+    const fetchMock = mockApi({
+      ...weekResponses("2026-11-02", "2026-11-08"),
+      ...weekResponses("2026-11-09", "2026-11-15"),
+    });
+    render(<App initialDate="2026-11-09" />);
+    await screen.findByRole("rowheader", { name: "Alice Martin" });
+
+    await userEvent.click(screen.getByRole("button", { name: "Semaine précédente" }));
+
+    expect(
+      await screen.findByRole("heading", { name: "Semaine du 02/11/2026 au 08/11/2026" }),
+    ).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledWith("/api/shifts/?start=2026-11-02&end=2026-11-08");
+  });
 });
