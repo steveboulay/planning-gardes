@@ -153,4 +153,17 @@ describe("App", () => {
 
     expect(screen.queryByText(lateMessage)).not.toBeInTheDocument();
   });
+
+  it("ignores the late failure of a week that is no longer shown", async () => {
+    const answerFirstWeek = mockApiWithLateFirstWeek();
+    render(<App initialDate="2026-11-04" />);
+    await userEvent.click(screen.getByRole("button", { name: "Semaine suivante" }));
+    await screen.findByText("Aucune infraction cette semaine.");
+
+    await act(async () => {
+      answerFirstWeek(Response.json({ detail: "Erreur." }, { status: 500 }));
+    });
+
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
 });
