@@ -95,4 +95,15 @@ describe("App", () => {
     ).toBeInTheDocument();
     expect(fetchMock).toHaveBeenCalledWith("/api/shifts/?start=2026-11-02&end=2026-11-08");
   });
+
+  it("shows an error when the API fails", async () => {
+    mockApi({});
+
+    render(<App initialDate="2026-11-04" />);
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Impossible de charger le planning.",
+    );
+    expect(screen.queryByText("Chargement…")).not.toBeInTheDocument();
+  });
 });
