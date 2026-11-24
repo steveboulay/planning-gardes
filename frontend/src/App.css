@@ -1,0 +1,73 @@
+body {
+  margin: 0;
+  font-family: system-ui, sans-serif;
+  color: #1f2328;
+  background: #ffffff;
+}
+
+main {
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: 1.5rem 1rem;
+}
+
+nav {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+nav h2 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.week-grid {
+  width: 100%;
+  margin-top: 1.5rem;
+  border-collapse: collapse;
+}
+
+.week-grid th,
+.week-grid td {
+  padding: 0.5rem;
+  border: 1px solid #d0d7de;
+  text-align: left;
+  vertical-align: top;
+}
+
+/* Point d'ancrage du bloc des messages, qui flotte sous la cellule */
+.week-grid td {
+  position: relative;
+}
+
+.week-grid td.violation {
+  background: #ffebe9;
+  box-shadow: inset 0 0 0 2px #cf222e;
+}
+
+.week-grid summary {
+  margin-top: 0.25rem;
+  color: #cf222e;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.week-grid details ul {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 1;
+  width: 16rem;
+  margin: 0;
+  padding: 0.5rem 0.75rem 0.5rem 1.75rem;
+  background: #ffffff;
+  border: 1px solid #cf222e;
+  box-shadow: 0 4px 12px rgb(0 0 0 / 15%);
+}
+
+/* Dans les trois dernières colonnes, le bloc s'ouvre vers la gauche pour rester dans la page */
+.week-grid td:nth-last-child(-n + 3) details ul {
+  right: 0;
+  left: auto;
+}

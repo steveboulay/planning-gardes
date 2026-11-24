@@ -4,7 +4,7 @@
 
 On lui donne le planning d'un service de soins, il renvoie les règles enfreintes : repos insuffisant, trop de nuits d'affilée, trop d'heures dans la semaine, jour de repos demandé non respecté. Il ne construit pas de planning, il contrôle celui qu'on lui soumet.
 
-Projet personnel, écrit pour apprendre Python, puis Django et React, en venant de PHP et Symfony. Le code suit la méthode « test d'abord » avec pytest (les écarts sont notés dans le journal) et la CI GitLab le vérifie à chaque push.
+Projet personnel, écrit pour apprendre Python, puis Django et React, en venant de PHP et Symfony. Le code suit la méthode « test d'abord », avec pytest pour le backend et Vitest pour le front (les écarts sont notés dans le journal), et la CI GitLab le vérifie à chaque push.
 
 ## Les règles
 
@@ -166,7 +166,35 @@ curl "http://127.0.0.1:8000/api/schedule/violations/?start=2026-11-02&end=2026-1
 }
 ```
 
+## Le front
+
+![La semaine du 2 novembre 2026 avec les données de démonstration](docs/front-semaine.png)
+
+Une page React et TypeScript, dans `frontend/`, affiche une semaine : une ligne par soignant, une colonne par jour, et chaque poste dans la cellule du jour où il commence. Une cellule en infraction est encadrée de rouge, et un clic sur « 1 infraction » déplie les messages. La liste de toutes les infractions de la semaine suit la grille. Deux boutons passent à la semaine précédente ou suivante.
+
+Django doit tourner sur le port 8000 (voir « Base de données »). Dans un second terminal :
+
+```bash
+cd frontend
+npm ci
+npm run dev
+```
+
+La page est à l'adresse http://localhost:5173/?date=2026-11-02. Le paramètre `date` choisit la semaine affichée ; sans lui, c'est la semaine du jour. En développement, Vite transmet les appels à `/api` au serveur Django.
+
+Le code est réparti en cinq fichiers de `frontend/src/` :
+
+- `week.ts` : le calcul des dates, sans React (lundi de la semaine, sept jours, ajout de semaines, mise en forme) ;
+- `api.ts` : les types des réponses de l'API, et le chargement d'une semaine par trois appels lancés ensemble ;
+- `WeekGrid.tsx` : la grille ;
+- `ViolationList.tsx` : la liste des infractions ;
+- `App.tsx` : la page, avec la navigation, le chargement et l'affichage d'une erreur.
+
+Les tests, écrits avec Vitest et Testing Library, cherchent les éléments comme le ferait un lecteur d'écran : par leur rôle et leur texte. Les appels à l'API y sont simulés en remplaçant `fetch`.
+
 ## Lancer les tests
+
+### Backend
 
 Il faut [uv](https://docs.astral.sh/uv/), qui installe Python 3.13 si besoin.
 
@@ -181,7 +209,19 @@ uv run python manage.py check
 uv run python manage.py makemigrations --check --dry-run
 ```
 
-La CI GitLab lance les mêmes commandes à chaque push.
+### Front
+
+Il faut Node 24.15 ou plus récent (voir `frontend/.nvmrc`).
+
+```bash
+cd frontend
+npm ci
+npm run check
+```
+
+`npm run check` enchaîne oxlint, Prettier, les tests Vitest, puis le build, qui vérifie aussi les types.
+
+La CI GitLab lance les mêmes contrôles à chaque push, dans deux jobs : `backend` et `frontend`.
 
 ## Choix et limites
 
@@ -193,6 +233,9 @@ La CI GitLab lance les mêmes commandes à chaque push.
 - L'API n'a pas d'authentification : c'est une API de démonstration. Aucun endpoint n'écrit en base, les données se saisissent dans l'admin ou se chargent par fixture.
 - Les infractions d'une période ne voient que les postes de cette période : un repos trop court entre le dimanche soir et le lundi matin de la semaine suivante, ou une série de nuits commencée la semaine précédente, n'est pas signalé.
 - Les identifiants de `compose.yaml` sont des valeurs de développement pour une base locale, pas des secrets.
+- Le front fait confiance à la forme des réponses de l'API : les types TypeScript décrivent le JSON attendu, mais rien ne le vérifie à l'exécution.
+- Les messages d'une cellule se déplient avec un élément HTML `<details>`. Ils se referment par un second clic, mais pas par un clic ailleurs ni par la touche Échap. La Popover API du navigateur le permettrait, mais jsdom, dans lequel tournent les tests, ne la gère pas.
+- La mise en page n'est couverte par aucun test, puisque jsdom ne calcule pas de rendu. Elle a été vérifiée à la main dans un navigateur.
 
 ## Usage de l'IA
 
@@ -200,8 +243,8 @@ Le projet est développé avec l'aide de Claude (Anthropic) : découpage des ét
 
 ## Suite
 
-1. Un front React et TypeScript : la grille de la semaine, avec les infractions mises en évidence.
-2. Des scénarios de bout en bout avec Playwright.
+1. Des scénarios de bout en bout avec Playwright, dans un vrai navigateur, qui couvriront aussi la mise en page.
+2. Une fenêtre pour les messages d'une cellule avec la Popover API, testée par ces scénarios.
 
 ## Licence
 

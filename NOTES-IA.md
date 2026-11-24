@@ -210,3 +210,83 @@ Ce projet est développé avec l'aide de Claude (Anthropic). J'écris le code et
 - `test_staff_member_is_displayed_with_its_code_and_name`, `test_shift_is_displayed_with_its_staff_kind_and_slot` et `test_day_off_request_is_displayed_with_its_staff_and_day` : ajoutés pour les `__str__` des modèles. Le premier, vert d'emblée, a été vérifié en changeant le format ; les deux autres ont fait naître leur `__str__`. Celui des postes renvoyait d'abord un tuple, à cause d'une virgule entre deux f-strings.
 - `test_overlapping_shift_is_reported_by_validation` : a fait naître le message de la contrainte d'exclusion.
 - `test_shift_ending_before_its_start_is_reported_by_validation` : échouait sur une `DataError` de PostgreSQL ; a fait naître la `condition` de la contrainte d'exclusion et le message de la `CheckConstraint`. Vérifié en retirant chacun : il échoue à chaque fois.
+
+## 2026-11-19 · Étape 4 : front React et TypeScript
+
+- **Demandé à l'IA :** le cahier des charges de l'étape (socle Vite, outils, tests de composants, job de CI), puis un accompagnement test par test, avec les équivalences Angular, et une revue de chaque push.
+- **Proposé :**
+  - le socle : le modèle `react-ts` de Vite 8, avec TypeScript 7 et oxlint (typescript-eslint ne prend pas encore en charge TypeScript 7), Prettier, Vitest avec jsdom et Testing Library, le proxy de `/api` vers Django, Node 24 dans la CI et dans `.nvmrc` ;
+  - les extensions VS Code Oxc, Prettier et Vitest, et le formatage à l'enregistrement pour TypeScript et CSS ;
+  - le job `frontend` de la CI, avec un cache npm ;
+  - trois pièges de dates relevés sur une implémentation de référence : `new Date("2026-11-02")` lit minuit UTC, `getDay()` vaut 0 le dimanche, et une addition en millisecondes se trompe d'un jour au changement d'heure. D'où le fuseau `Europe/Paris` fixé dans la configuration de Vitest : la CI tourne en UTC, et sans lui elle ne verrait pas ce dernier bug ;
+  - les fonctions de test `cellOf`, `mockApi` (une 404 avec un corps JSON, comme DRF) et `weekResponses` ;
+  - `App.css`, vérifié dans un navigateur avec Playwright sur l'API réelle, la capture du README et le premier jet de la section « Le front ».
+- **Gardé / corrigé :**
+  - Prettier a réindenté `.vscode/settings.json` sur deux espaces : hors de `frontend/`, il ne trouvait pas sa configuration. Un `.editorconfig` à la racine fixe l'indentation des fichiers de `.vscode`.
+  - `weekDays` attendait un lundi sans le vérifier. J'ai demandé pourquoi. Parmi les options comparées (lever une erreur, ramener la date à son lundi, un type marqué), j'ai gardé la deuxième, avec son test.
+  - Les messages d'une cellule passaient par l'attribut `title`, invisible sur un écran tactile. J'ai proposé de les afficher au clic. Sur les trois solutions comparées, la Popover API n'est pas gérée par jsdom, et une fenêtre pilotée par l'état React aurait refait à la main ce que le navigateur sait faire. J'ai gardé un élément `<details>` ; la Popover API est notée comme évolution.
+  - L'IA avait jugé trop lourd de tester le drapeau `ignore` de l'effet, qui écarte une réponse arrivée après un changement de semaine. J'ai demandé pourquoi ne pas le faire : deux tests le couvrent maintenant, avec une réponse que le test libère au moment qu'il choisit.
+  - L'IA avait d'abord pris le message comme clé des éléments de liste. En relisant le moteur, elle a trouvé que deux infractions peuvent avoir le même message : la clé est devenue la position, avec deux tests qui espionnent les avertissements de React.
+  - Plusieurs explications de l'IA ont dû être corrigées en route : une mutation de `mondayOf` qui faisait aussi échouer le test du mercredi, un bug d'heure d'été annoncé « un lundi sur deux » alors qu'il ne touche que deux semaines par an, et un ordre des infractions de l'API décrit à tort comme groupé par règle. J'ai aussi relevé un commentaire de plus de 100 caractères dans son code : Prettier ne coupe pas les commentaires, et oxlint ne mesure pas les lignes.
+  - Mes erreurs de commit : un `git add` lancé depuis `frontend/` (la commande proposée oubliait le `cd ..`), un test commité alors que l'éditeur n'avait pas enregistré la bonne version (un doublon, corrigé par un fixup et poussé en deux temps pour que la CI montre le rouge), deux blocs `describe` pour la même fonction, et des messages de commit qui décrivaient la fonction plutôt que le test.
+  - Node 20 sur un de mes deux postes : mis à jour en 24, comme la CI.
+- **Vérifié par :** `npm run check` (oxlint, Prettier, Vitest, puis le build avec `tsc -b`) en local et dans la CI ; un pipeline rouge pour chaque commit de test qui précède son code ; la réintroduction de l'erreur visée par chaque test vert dès son premier lancement ; chaque commit rejoué par l'IA ; l'application lancée avec Django et les données de démonstration, puis contrôlée avec Playwright : pas de défilement horizontal en 1 280 et en 800 pixels de large, accès au clavier, console du navigateur sans erreur.
+- **Bilan :** cinq fichiers de code et 33 tests Vitest (12 sur les dates, 9 sur la grille, 3 sur la liste, 9 sur la page), soit 109 tests avec ceux du backend, qui n'a pas changé.
+  - Ce qui a bien marché : le rouge de chaque test visible dans la CI ; des tests qui cherchent les éléments par leur rôle, comme un lecteur d'écran ; le fuseau fixé dans la configuration, qui rend le test du changement d'heure utile dans la CI ; trois améliorations venues de mes questions (le lundi de `weekDays`, l'affichage au clic, les tests du drapeau `ignore`).
+  - Ce qui a moins bien marché : des commits faits depuis le mauvais dossier ou avec un fichier non enregistré ; un commit annexe, le script `check`, glissé entre un test rouge et son code ; des explications de l'IA à corriger plusieurs fois.
+  - Une limite apparue en fin d'étape : la liste des infractions affiche le code du soignant (« Soignant nurse-1 »), alors que la grille affiche son nom. Le moteur ne connaît que les codes. Une merge request à part retirera le soignant des messages, et le front présentera lui-même le nom et le jour.
+- **Appris :**
+  - TypeScript compare les types par leur structure : `type IsoDate = string` documente, mais n'empêche rien. `import type` importe un type seul, effacé à la compilation.
+  - Une union de chaînes (`"jour" | "nuit"`) joue le rôle d'un enum PHP, et `Record<StoredShift["kind"], string>` oblige à donner un libellé pour chaque valeur.
+  - `as T` est une promesse faite au compilateur : rien ne vérifie le JSON à l'exécution.
+  - En JavaScript, les mois commencent à 0, `getDate()` donne le jour du mois et `getDay()` le jour de la semaine. `Date` est modifiable, et `setDate()` déborde sur le mois suivant, comme `mktime`.
+  - `toISOString()` écrit l'heure UTC. Un formateur `Intl.DateTimeFormat` coûte cher à construire, d'où une constante du module.
+  - `Array.from({ length: 7 }, …)` remplit un tableau, alors que `new Array(7).map(…)` laisse des cases vides ; `map(parseInt)` passe la position comme base.
+  - Un composant React est une fonction qui renvoie du JSX. `className` remplace `class`, `key` joue le rôle du `track` d'Angular, et la position convient comme clé pour une liste qui ne contient que du texte.
+  - `{condition && …}` affiche `0` quand la condition est un nombre nul : il faut un vrai booléen.
+  - `useState` avec une fonction n'appelle cette fonction qu'au premier rendu ; plusieurs `setX` dans un même gestionnaire d'événement ne donnent qu'un rendu.
+  - `useEffect` relance son effet quand une dépendance change, après avoir appelé le nettoyage de l'effet précédent. Le `StrictMode` lance chaque effet deux fois en développement.
+  - `fetch` ne lève aucune erreur sur une réponse 404 ou 500 : c'est à nous de lire `response.ok`.
+  - Testing Library : `getBy` quand l'élément doit être là, `queryBy` pour une absence, `findBy` pour attendre ; `within` limite la recherche à un élément. `<summary>` n'a pas de rôle pour Testing Library, et `toBeVisible()` tient compte d'un `<details>` fermé.
+  - `userEvent.click` s'attend avec `await` ; `act` est nécessaire quand le test résout lui-même une promesse qui met à jour l'affichage.
+  - Une promesse dont on garde la fonction `resolve` permet au test de choisir le moment d'une réponse.
+  - Un espion sur `console.error` rend visible un avertissement de React, qui sinon ne fait échouer aucun test.
+  - Vitest sort en erreur s'il ne trouve aucun test. Le serveur TypeScript de VS Code peut garder un état périmé : c'est `npm run build` qui fait foi.
+  - `git push --force-with-lease origin HEAD~1:feat/front` pousse un seul commit, pour que la CI teste le commit de test avant celui du code.
+
+### Tests
+
+- Hors tests : le socle, les réglages de VS Code et le `.editorconfig`, le script `npm run check`, `App.css`, et un commentaire sur les clés des listes.
+- `toIsoDate › pads the month and the day with zeros` : premier test, arrivé avec le job `frontend` de la CI. Rouge d'abord sur le module absent ; le rouge sur la valeur a été vérifié avec `toISOString()`, qui donne le 4 janvier à Paris.
+- `isIsoDate › accepts an existing day` : a fait naître `isIsoDate` et la fonction interne `toDate`.
+- `isIsoDate › rejects a malformed or impossible day` : vert dès le premier lancement. Vérifié avec `value.length === 10` : il échoue sur le 30 février. Placé d'abord dans un second bloc `describe`, fusionné par amend.
+- `mondayOf › returns the Monday of a Wednesday` : a fait naître `mondayOf` et la fonction interne `addDays`.
+- `mondayOf › returns the day itself for a Monday` : vert dès le premier lancement. Vérifié en cherchant le lundi strictement précédent. La mutation du plan, retirer le `% 7`, faisait aussi échouer le test du mercredi.
+- `mondayOf › returns the previous Monday for a Sunday` : vert dès le premier lancement. Vérifié avec `getDay() - 1` : le dimanche avance au lundi suivant.
+- `weekDays › returns the seven days from Monday to Sunday` : a fait naître `weekDays`.
+- `weekDays › starts on the Monday of the given day's week` : ajouté après ma question ; rouge sur la valeur, puis `weekDays` passe par `mondayOf`.
+- `weekDays › crosses the end of a month` : vert dès le premier lancement. Vérifié en ajoutant les jours sur la chaîne : il obtient le 36 novembre.
+- `addWeeks › goes back one week across the spring clock change` : rouge sur la valeur avec une addition en millisecondes (le 22 mars au lieu du 23), puis `addWeeks` passe par `addDays`. Avec `TZ=UTC` et sans le fuseau de la configuration, la version en millisecondes passe à tort.
+- `formatDayHeader › writes the short weekday, the day and the month` : a fait naître la constante `Intl.DateTimeFormat`. J'y vérifie les sept jours de la semaine.
+- `formatDate › writes the day, the month and the year` : a fait naître `formatDate`.
+- `WeekGrid › shows one column per day of the week` : a fait naître le composant, son en-tête et les types de `api.ts`.
+- `WeekGrid › shows one row per staff member, in the given order` : Bruno avant Alice. Vérifié en ajoutant un tri par nom : il échoue.
+- `WeekGrid › shows a shift in the cell of its staff member and start day` : a fait naître les cellules et `shiftLabel`. Vérifié en retirant tour à tour la condition sur le soignant et celle sur le jour.
+- `WeekGrid › shows a night in the cell of the day it starts` : vert dès le premier lancement. Vérifié avec `shift.end.startsWith(day)`.
+- `WeekGrid › marks the cell of a violation` : a fait naître la classe `violation`, d'abord avec les messages dans l'attribut `title`, retiré ensuite.
+- `WeekGrid › does not mark the cells of another day or another staff member` : vert dès le premier lancement. Vérifié en retirant tour à tour les deux conditions du filtre.
+- `WeekGrid › shows the messages of a violation when its cell is clicked` : ajouté après ma proposition ; a fait naître le `<details>`. Vérifié aussi avec `<details open>` : il échoue avant le clic.
+- `WeekGrid › writes the number of violations in the plural` : a fait naître `violationCount`.
+- `WeekGrid › lists two identical messages of the same cell` : rouge sur l'avertissement de React ; la clé est devenue la position.
+- `ViolationList › lists the messages of the violations, in the given order` : a fait naître le composant. Vérifié en ajoutant un tri par jour.
+- `ViolationList › says when the week has no violation` : a fait naître le message de semaine vide. Vérifié avec une liste toujours affichée.
+- `ViolationList › lists two identical messages` : vert dès le premier lancement. Vérifié avec le message comme clé.
+- `App › shows the week of the initial date` : a fait naître `fetchWeekSchedule`, l'état, l'effet et la lecture de `?date=` dans `main.tsx`.
+- `App › shows a loading message until the week arrives` : ajouté pendant l'étape. Vérifié avec un message toujours affiché.
+- `App › loads the next week` : a fait du lundi un état, avec le bouton « Semaine suivante ».
+- `App › hides the previous week while the next one loads` : ajouté pendant l'étape, avec une réponse qui n'arrive jamais ; a fait naître la remise à zéro du planning au changement de semaine.
+- `App › loads the previous week` : écrit par moi, depuis le lundi 9 novembre. Le premier commit contenait un doublon du test précédent : corrigé par un fixup.
+- `App › shows an error when the API fails` : a fait naître le contrôle de `response.ok` et l'état d'erreur. Le rouge montrait le JSON d'erreur de DRF arrivé dans la grille (`staff.map is not a function`).
+- `App › clears the error when another week loads` : ajouté pendant l'étape ; a fait naître la remise à zéro de l'erreur.
+- `App › ignores the late answer of a week that is no longer shown` : ajouté après ma question. Vérifié en retirant le drapeau `ignore` du `.then`.
+- `App › ignores the late failure of a week that is no longer shown` : ajouté avec le précédent. Vérifié en retirant le drapeau du `.catch`.

@@ -13,5 +13,25 @@
             "source.fixAll.ruff": "explicit"
         },
         "editor.rulers": [100]
+    },
+    "[typescript]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+            "source.fixAll.oxc": "explicit"
+        },
+        "editor.rulers": [100]
+    },
+    "[typescriptreact]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+            "source.fixAll.oxc": "explicit"
+        },
+        "editor.rulers": [100]
+    },
+    "[css]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "editor.formatOnSave": true
     }
 }

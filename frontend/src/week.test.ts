@@ -1,0 +1,89 @@
+import { describe, expect, it } from "vitest";
+
+import {
+  toIsoDate,
+  isIsoDate,
+  mondayOf,
+  weekDays,
+  addWeeks,
+  formatDayHeader,
+  formatDate,
+} from "./week";
+
+describe("toIsoDate", () => {
+  it("pads the month and the day with zeros", () => {
+    expect(toIsoDate(new Date(2026, 0, 5))).toBe("2026-01-05");
+  });
+});
+
+describe("isIsoDate", () => {
+  it("accepts an existing day", () => {
+    expect(isIsoDate("2026-11-02")).toBe(true);
+  });
+
+  it("rejects a malformed or impossible day", () => {
+    expect(isIsoDate("2026-11-2")).toBe(false);
+    expect(isIsoDate("demain")).toBe(false);
+    expect(isIsoDate("2026-02-30")).toBe(false);
+  });
+});
+
+describe("mondayOf", () => {
+  it("returns the Monday of a Wednesday", () => {
+    expect(mondayOf("2026-11-04")).toBe("2026-11-02");
+  });
+
+  it("returns the day itself for a Monday", () => {
+    expect(mondayOf("2026-11-02")).toBe("2026-11-02");
+  });
+
+  it("returns the previous Monday for a Sunday", () => {
+    expect(mondayOf("2026-11-08")).toBe("2026-11-02");
+  });
+});
+
+describe("weekDays", () => {
+  it("returns the seven days from Monday to Sunday", () => {
+    expect(weekDays("2026-11-02")).toEqual([
+      "2026-11-02",
+      "2026-11-03",
+      "2026-11-04",
+      "2026-11-05",
+      "2026-11-06",
+      "2026-11-07",
+      "2026-11-08",
+    ]);
+  });
+
+  it("starts on the Monday of the given day's week", () => {
+    expect(weekDays("2026-11-04")[0]).toBe("2026-11-02");
+  });
+
+  it("crosses the end of a month", () => {
+    expect(weekDays("2026-11-30").at(-1)).toBe("2026-12-06");
+  });
+});
+
+describe("addWeeks", () => {
+  it("goes back one week across the spring clock change", () => {
+    expect(addWeeks("2026-03-30", -1)).toBe("2026-03-23");
+  });
+});
+
+describe("formatDayHeader", () => {
+  it("writes the short weekday, the day and the month", () => {
+    expect(formatDayHeader("2026-11-02")).toBe("lun. 02/11");
+    expect(formatDayHeader("2026-11-03")).toBe("mar. 03/11");
+    expect(formatDayHeader("2026-11-04")).toBe("mer. 04/11");
+    expect(formatDayHeader("2026-11-05")).toBe("jeu. 05/11");
+    expect(formatDayHeader("2026-11-06")).toBe("ven. 06/11");
+    expect(formatDayHeader("2026-11-07")).toBe("sam. 07/11");
+    expect(formatDayHeader("2026-11-08")).toBe("dim. 08/11");
+  });
+});
+
+describe("formatDate", () => {
+  it("writes the day, the month and the year", () => {
+    expect(formatDate("2026-11-02")).toBe("02/11/2026");
+  });
+});
