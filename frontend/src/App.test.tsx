@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
@@ -23,6 +23,28 @@ function weekResponses(start: string, end: string) {
     [`/api/shifts/?start=${start}&end=${end}`]: [],
     [`/api/schedule/violations/?start=${start}&end=${end}`]: { violations: [] },
   };
+}
+
+/**
+ * Comme mockApi pour les semaines du 2 et du 9 novembre, sauf les infractions de la semaine
+ * du 2 : elles n'arrivent que lorsque le test appelle la fonction renvoyée.
+ */
+function mockApiWithLateFirstWeek() {
+  const responses: Record<string, unknown> = {
+    ...weekResponses("2026-11-02", "2026-11-08"),
+    ...weekResponses("2026-11-09", "2026-11-15"),
+  };
+  let answer: (response: Response) => void = () => {};
+  vi.spyOn(globalThis, "fetch").mockImplementation((input) => {
+    const url = String(input);
+    if (url === "/api/schedule/violations/?start=2026-11-02&end=2026-11-08") {
+      return new Promise((resolve) => {
+        answer = resolve;
+      });
+    }
+    return Promise.resolve(Response.json(responses[url]));
+  });
+  return (response: Response) => answer(response);
 }
 
 describe("App", () => {
@@ -116,5 +138,19 @@ describe("App", () => {
 
     expect(await screen.findByRole("rowheader", { name: "Alice Martin" })).toBeInTheDocument();
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  it("ignores the late answer of a week that is no longer shown", async () => {
+    const answerFirstWeek = mockApiWithLateFirstWeek();
+    const lateMessage = "Infraction de la semaine du 2 novembre.";
+    render(<App initialDate="2026-11-04" />);
+    await userEvent.click(screen.getByRole("button", { name: "Semaine suivante" }));
+    await screen.findByText("Aucune infraction cette semaine.");
+
+    await act(async () => {
+      answerFirstWeek(Response.json({ violations: [{ message: lateMessage }] }));
+    });
+
+    expect(screen.queryByText(lateMessage)).not.toBeInTheDocument();
   });
 });
