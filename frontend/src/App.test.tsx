@@ -106,4 +106,15 @@ describe("App", () => {
     );
     expect(screen.queryByText("Chargement…")).not.toBeInTheDocument();
   });
+
+  it("clears the error when another week loads", async () => {
+    mockApi(weekResponses("2026-11-09", "2026-11-15"));
+    render(<App initialDate="2026-11-04" />);
+    await screen.findByRole("alert");
+
+    await userEvent.click(screen.getByRole("button", { name: "Semaine suivante" }));
+
+    expect(await screen.findByRole("rowheader", { name: "Alice Martin" })).toBeInTheDocument();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
 });
