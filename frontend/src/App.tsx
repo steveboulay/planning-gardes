@@ -27,6 +27,7 @@ export default function App({ initialDate }: AppProps) {
 
   function goToWeek(weeks: number) {
     setMonday(addWeeks(monday, weeks));
+    setSchedule(null);
   }
 
   const days = weekDays(monday);
