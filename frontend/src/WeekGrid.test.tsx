@@ -91,4 +91,18 @@ describe("WeekGrid", () => {
     expect(cellOf("Alice Martin", 1)).toHaveClass("violation");
     expect(cellOf("Alice Martin", 1)).toHaveAttribute("title", message);
   });
+
+  it("does not mark the cells of another day or another staff member", () => {
+    render(
+      <WeekGrid
+        days={DAYS}
+        staff={STAFF}
+        shifts={[]}
+        violations={[violation("nurse-1", "2026-11-03", "Message")]}
+      />,
+    );
+
+    expect(cellOf("Alice Martin", 2)).not.toHaveClass("violation");
+    expect(cellOf("Bruno Petit", 1)).not.toHaveClass("violation");
+  });
 });
