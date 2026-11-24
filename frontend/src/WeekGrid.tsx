@@ -19,7 +19,7 @@ type WeekGridProps = {
 };
 
 /** Grille de la semaine : une ligne par soignant, une colonne par jour. */
-export function WeekGrid({ days, staff, shifts }: WeekGridProps) {
+export function WeekGrid({ days, staff, shifts, violations }: WeekGridProps) {
   return (
     <table className="week-grid">
       <thead>
@@ -40,8 +40,15 @@ export function WeekGrid({ days, staff, shifts }: WeekGridProps) {
               const dayShifts = shifts.filter(
                 (shift) => shift.staff === member.code && shift.start.startsWith(day),
               );
+              const messages = violations
+                .filter((violation) => violation.staff_id === member.code && violation.day === day)
+                .map((violation) => violation.message);
               return (
-                <td key={day}>
+                <td
+                  key={day}
+                  className={messages.length > 0 ? "violation" : undefined}
+                  title={messages.length > 0 ? messages.join("\n") : undefined}
+                >
                   {dayShifts.map((shift) => (
                     <div key={shift.id}>{shiftLabel(shift)}</div>
                   ))}
