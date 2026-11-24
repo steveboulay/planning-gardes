@@ -1,5 +1,5 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import type { Violation } from "./api";
 import { ViolationList } from "./ViolationList";
@@ -37,5 +37,22 @@ describe("ViolationList", () => {
 
     expect(screen.getByText("Aucune infraction cette semaine.")).toBeInTheDocument();
     expect(screen.queryByRole("list")).not.toBeInTheDocument();
+  });
+
+  it("lists two identical messages", () => {
+    const consoleError = vi.spyOn(console, "error");
+    const tuesday: Violation = {
+      rule: "repos_quotidien",
+      category: "légale",
+      staff_id: "nurse-1",
+      day: "2026-11-03",
+      message: "Soignant nurse-1 : repos de 11:00 inférieur à 12:00.",
+    };
+    const thursday = { ...tuesday, day: "2026-11-05" };
+
+    render(<ViolationList violations={[tuesday, thursday]} />);
+
+    expect(screen.getAllByText(tuesday.message)).toHaveLength(2);
+    expect(consoleError).not.toHaveBeenCalled();
   });
 });
