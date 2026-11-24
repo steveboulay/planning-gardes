@@ -44,14 +44,20 @@ export function WeekGrid({ days, staff, shifts, violations }: WeekGridProps) {
                 .filter((violation) => violation.staff_id === member.code && violation.day === day)
                 .map((violation) => violation.message);
               return (
-                <td
-                  key={day}
-                  className={messages.length > 0 ? "violation" : undefined}
-                  title={messages.length > 0 ? messages.join("\n") : undefined}
-                >
+                <td key={day} className={messages.length > 0 ? "violation" : undefined}>
                   {dayShifts.map((shift) => (
                     <div key={shift.id}>{shiftLabel(shift)}</div>
                   ))}
+                  {messages.length > 0 && (
+                    <details>
+                      <summary>{messages.length} infraction</summary>
+                      <ul>
+                        {messages.map((message) => (
+                          <li key={message}>{message}</li>
+                        ))}
+                      </ul>
+                    </details>
+                  )}
                 </td>
               );
             })}

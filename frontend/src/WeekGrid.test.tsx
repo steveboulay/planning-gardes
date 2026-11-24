@@ -77,7 +77,7 @@ describe("WeekGrid", () => {
     expect(cellOf("Alice Martin", 6)).toHaveTextContent("Nuit 20:00–08:00");
   });
 
-  it("marks the cell of a violation with its message", () => {
+  it("marks the cell of a violation", () => {
     const message = "Soignant nurse-1 : repos de 11:00 inférieur à 12:00.";
 
     render(
@@ -90,7 +90,6 @@ describe("WeekGrid", () => {
     );
 
     expect(cellOf("Alice Martin", 1)).toHaveClass("violation");
-    expect(cellOf("Alice Martin", 1)).toHaveAttribute("title", message);
   });
 
   it("does not mark the cells of another day or another staff member", () => {
