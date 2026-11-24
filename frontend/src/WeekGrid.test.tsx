@@ -1,6 +1,6 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import type { StaffMember, StoredShift, Violation } from "./api";
 import { WeekGrid } from "./WeekGrid";
@@ -139,5 +139,25 @@ describe("WeekGrid", () => {
     );
 
     expect(within(cellOf("Alice Martin", 1)).getByText("2 infractions")).toBeInTheDocument();
+  });
+
+  it("lists two identical messages of the same cell", () => {
+    const consoleError = vi.spyOn(console, "error");
+    const message = "Soignant nurse-1 : repos de 02:00 inférieur à 12:00.";
+
+    render(
+      <WeekGrid
+        days={DAYS}
+        staff={STAFF}
+        shifts={[]}
+        violations={[
+          violation("nurse-1", "2026-11-03", message),
+          violation("nurse-1", "2026-11-03", message),
+        ]}
+      />,
+    );
+
+    expect(within(cellOf("Alice Martin", 1)).getAllByText(message)).toHaveLength(2);
+    expect(consoleError).not.toHaveBeenCalled();
   });
 });
