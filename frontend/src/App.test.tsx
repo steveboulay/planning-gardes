@@ -63,4 +63,20 @@ describe("App", () => {
     ).toBeInTheDocument();
     expect(fetchMock).toHaveBeenCalledWith("/api/shifts/?start=2026-11-09&end=2026-11-15");
   });
+
+  it("hides the previous week while the next one loads", async () => {
+    const firstWeek: Record<string, unknown> = weekResponses("2026-11-02", "2026-11-08");
+    vi.spyOn(globalThis, "fetch").mockImplementation((input) => {
+      const body = firstWeek[String(input)];
+      // La semaine suivante ne répond jamais : la page reste en cours de chargement
+      return body === undefined ? new Promise(() => {}) : Promise.resolve(Response.json(body));
+    });
+    render(<App initialDate="2026-11-04" />);
+    await screen.findByRole("rowheader", { name: "Alice Martin" });
+
+    await userEvent.click(screen.getByRole("button", { name: "Semaine suivante" }));
+
+    expect(screen.getByText("Chargement…")).toBeInTheDocument();
+    expect(screen.queryByRole("rowheader", { name: "Alice Martin" })).not.toBeInTheDocument();
+  });
 });
