@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 
 import { type WeekSchedule, fetchWeekSchedule } from "./api";
+import "./App.css";
 import { ViolationList } from "./ViolationList";
 import { WeekGrid } from "./WeekGrid";
 import { type IsoDate, addWeeks, formatDate, mondayOf, weekDays } from "./week";
