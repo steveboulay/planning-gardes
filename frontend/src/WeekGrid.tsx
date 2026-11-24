@@ -11,6 +11,11 @@ function shiftLabel(shift: StoredShift): string {
   return `${KIND_LABELS[shift.kind]} ${shift.start.slice(11, 16)}–${shift.end.slice(11, 16)}`;
 }
 
+/** "1 infraction", "2 infractions". */
+function violationCount(count: number): string {
+  return `${count} ${count > 1 ? "infractions" : "infraction"}`;
+}
+
 type WeekGridProps = {
   days: IsoDate[];
   staff: StaffMember[];
@@ -50,7 +55,7 @@ export function WeekGrid({ days, staff, shifts, violations }: WeekGridProps) {
                   ))}
                   {messages.length > 0 && (
                     <details>
-                      <summary>{messages.length} infraction</summary>
+                      <summary>{violationCount(messages.length)}</summary>
                       <ul>
                         {messages.map((message) => (
                           <li key={message}>{message}</li>
