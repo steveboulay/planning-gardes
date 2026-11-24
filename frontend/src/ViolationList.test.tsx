@@ -31,4 +31,11 @@ describe("ViolationList", () => {
       "Soignant nurse-1 : repos de 11:00 inférieur à 12:00.",
     ]);
   });
+
+  it("says when the week has no violation", () => {
+    render(<ViolationList violations={[]} />);
+
+    expect(screen.getByText("Aucune infraction cette semaine.")).toBeInTheDocument();
+    expect(screen.queryByRole("list")).not.toBeInTheDocument();
+  });
 });
