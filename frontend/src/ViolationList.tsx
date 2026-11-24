@@ -9,11 +9,15 @@ export function ViolationList({ violations }: ViolationListProps) {
   return (
     <section>
       <h2>Infractions</h2>
-      <ul>
-        {violations.map((violation, index) => (
-          <li key={index}>{violation.message}</li>
-        ))}
-      </ul>
+      {violations.length === 0 ? (
+        <p>Aucune infraction cette semaine.</p>
+      ) : (
+        <ul>
+          {violations.map((violation, index) => (
+            <li key={index}>{violation.message}</li>
+          ))}
+        </ul>
+      )}
     </section>
   );
 }
