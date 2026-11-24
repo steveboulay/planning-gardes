@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { type WeekSchedule, fetchWeekSchedule } from "./api";
 import { ViolationList } from "./ViolationList";
 import { WeekGrid } from "./WeekGrid";
-import { type IsoDate, formatDate, mondayOf, weekDays } from "./week";
+import { type IsoDate, addWeeks, formatDate, mondayOf, weekDays } from "./week";
 
 type AppProps = {
   initialDate: IsoDate;
@@ -11,7 +11,7 @@ type AppProps = {
 
 /** Planning de la semaine qui contient la date de départ, avec ses infractions. */
 export default function App({ initialDate }: AppProps) {
-  const monday = mondayOf(initialDate);
+  const [monday, setMonday] = useState(() => mondayOf(initialDate));
   const [schedule, setSchedule] = useState<WeekSchedule | null>(null);
 
   useEffect(() => {
@@ -25,14 +25,23 @@ export default function App({ initialDate }: AppProps) {
     };
   }, [monday]);
 
+  function goToWeek(weeks: number) {
+    setMonday(addWeeks(monday, weeks));
+  }
+
   const days = weekDays(monday);
 
   return (
     <main>
       <h1>Planning de gardes</h1>
-      <h2>
-        Semaine du {formatDate(days[0])} au {formatDate(days[6])}
-      </h2>
+      <nav>
+        <h2>
+          Semaine du {formatDate(days[0])} au {formatDate(days[6])}
+        </h2>
+        <button type="button" onClick={() => goToWeek(1)}>
+          Semaine suivante
+        </button>
+      </nav>
       {schedule === null && <p>Chargement…</p>}
       {schedule !== null && (
         <>
