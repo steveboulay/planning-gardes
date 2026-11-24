@@ -1,4 +1,5 @@
 import { render, screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 
 import type { StaffMember, StoredShift, Violation } from "./api";
@@ -104,5 +105,24 @@ describe("WeekGrid", () => {
 
     expect(cellOf("Alice Martin", 2)).not.toHaveClass("violation");
     expect(cellOf("Bruno Petit", 1)).not.toHaveClass("violation");
+  });
+
+  it("shows the messages of a violation when its cell is clicked", async () => {
+    const message = "Soignant nurse-1 : repos de 11:00 inférieur à 12:00.";
+
+    render(
+      <WeekGrid
+        days={DAYS}
+        staff={STAFF}
+        shifts={[]}
+        violations={[violation("nurse-1", "2026-11-03", message)]}
+      />,
+    );
+    const cell = cellOf("Alice Martin", 1);
+    expect(within(cell).getByText(message)).not.toBeVisible();
+
+    await userEvent.click(within(cell).getByText("1 infraction"));
+
+    expect(within(cell).getByText(message)).toBeVisible();
   });
 });
