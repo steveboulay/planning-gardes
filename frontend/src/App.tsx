@@ -33,6 +33,7 @@ export default function App({ initialDate }: AppProps) {
       <h2>
         Semaine du {formatDate(days[0])} au {formatDate(days[6])}
       </h2>
+      {schedule === null && <p>Chargement…</p>}
       {schedule !== null && (
         <>
           <WeekGrid days={days} {...schedule} />
