@@ -13,13 +13,18 @@ type AppProps = {
 export default function App({ initialDate }: AppProps) {
   const [monday, setMonday] = useState(() => mondayOf(initialDate));
   const [schedule, setSchedule] = useState<WeekSchedule | null>(null);
+  const [failed, setFailed] = useState(false);
 
   useEffect(() => {
     // Une réponse arrivée après un changement de semaine est ignorée
     let ignore = false;
-    fetchWeekSchedule(monday).then((result) => {
-      if (!ignore) setSchedule(result);
-    });
+    fetchWeekSchedule(monday)
+      .then((result) => {
+        if (!ignore) setSchedule(result);
+      })
+      .catch(() => {
+        if (!ignore) setFailed(true);
+      });
     return () => {
       ignore = true;
     };
@@ -46,7 +51,8 @@ export default function App({ initialDate }: AppProps) {
           Semaine suivante
         </button>
       </nav>
-      {schedule === null && <p>Chargement…</p>}
+      {failed && <p role="alert">Impossible de charger le planning.</p>}
+      {!failed && schedule === null && <p>Chargement…</p>}
       {schedule !== null && (
         <>
           <WeekGrid days={days} {...schedule} />

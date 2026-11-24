@@ -33,6 +33,9 @@ export type WeekSchedule = {
 
 async function getJson<T>(url: string): Promise<T> {
   const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`${url} : ${response.status}`);
+  }
   return (await response.json()) as T;
 }
 
