@@ -36,4 +36,14 @@ describe("App", () => {
     ).toBeInTheDocument();
     expect(fetchMock).toHaveBeenCalledWith("/api/shifts/?start=2026-11-02&end=2026-11-08");
   });
+
+  it("shows a loading message until the week arrives", async () => {
+    mockApi(weekResponses("2026-11-02", "2026-11-08"));
+
+    render(<App initialDate="2026-11-04" />);
+
+    expect(screen.getByText("Chargement…")).toBeInTheDocument();
+    expect(await screen.findByRole("rowheader", { name: "Alice Martin" })).toBeInTheDocument();
+    expect(screen.queryByText("Chargement…")).not.toBeInTheDocument();
+  });
 });
