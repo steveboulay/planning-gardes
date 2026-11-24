@@ -36,6 +36,9 @@ export default function App({ initialDate }: AppProps) {
     <main>
       <h1>Planning de gardes</h1>
       <nav>
+        <button type="button" onClick={() => goToWeek(-1)}>
+          Semaine précédente
+        </button>
         <h2>
           Semaine du {formatDate(days[0])} au {formatDate(days[6])}
         </h2>
