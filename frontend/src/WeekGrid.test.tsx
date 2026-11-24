@@ -1,7 +1,7 @@
 import { render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
-import type { StaffMember, StoredShift } from "./api";
+import type { StaffMember, StoredShift, Violation } from "./api";
 import { WeekGrid } from "./WeekGrid";
 import { weekDays } from "./week";
 
@@ -20,6 +20,10 @@ function shift(
   kind: StoredShift["kind"],
 ): StoredShift {
   return { id, staff, start, end, kind };
+}
+
+function violation(staffId: string, day: string, message: string): Violation {
+  return { rule: "repos_quotidien", category: "légale", staff_id: staffId, day, message };
 }
 
 /** Cellule d'un soignant pour un jour de la semaine, de 0 (lundi) à 6 (dimanche). */
@@ -70,5 +74,21 @@ describe("WeekGrid", () => {
     render(<WeekGrid days={DAYS} staff={STAFF} shifts={shifts} violations={[]} />);
 
     expect(cellOf("Alice Martin", 6)).toHaveTextContent("Nuit 20:00–08:00");
+  });
+
+  it("marks the cell of a violation with its message", () => {
+    const message = "Soignant nurse-1 : repos de 11:00 inférieur à 12:00.";
+
+    render(
+      <WeekGrid
+        days={DAYS}
+        staff={STAFF}
+        shifts={[]}
+        violations={[violation("nurse-1", "2026-11-03", message)]}
+      />,
+    );
+
+    expect(cellOf("Alice Martin", 1)).toHaveClass("violation");
+    expect(cellOf("Alice Martin", 1)).toHaveAttribute("title", message);
   });
 });
